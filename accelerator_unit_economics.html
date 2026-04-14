@@ -11,9 +11,20 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 @media(max-width:900px){body{padding:1.5rem 1.5rem 3rem}}
 @media(max-width:600px){body{padding:1rem 1rem 2rem}}
 
-.page-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #e8e8e8}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #e8e8e8}
 .page-title{font-size:16px;font-weight:700;color:#222}
 .page-sub{font-size:11px;color:#aaa;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.share-row{display:flex;align-items:center;gap:8px}
+.scenario-input{height:32px;border:1px solid #e0e0e0;border-radius:3px;padding:0 10px;font-size:11px;font-family:inherit;color:#222;width:160px;background:#fff}
+.scenario-input:focus{outline:none;border-color:#416BA9}
+.share-btn{height:32px;padding:0 14px;border:1px solid #416BA9;border-radius:3px;background:#416BA9;color:#fff;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .15s}
+.share-btn:hover{background:#2f5490}
+.share-btn.copied{background:#2d6645;border-color:#2d6645}
+.share-toast{font-size:10px;color:#2d6645;font-weight:700;opacity:0;transition:opacity .3s}
+.share-toast.visible{opacity:1}
+.loaded-banner{background:#e8f0f8;border:1px solid #c5d8ef;border-radius:3px;padding:8px 12px;margin-bottom:1.25rem;font-size:11px;color:#416BA9;display:flex;align-items:center;justify-content:space-between}
+.loaded-banner strong{font-weight:700}
+.loaded-banner button{background:none;border:none;color:#416BA9;font-size:11px;cursor:pointer;font-weight:700;font-family:inherit;padding:0}
 
 .main-tabs{display:flex;gap:0;border-bottom:1px solid #e8e8e8;margin-bottom:1.75rem}
 .main-tab{padding:11px 22px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:#aaa;font-family:inherit;margin-bottom:-1px;transition:color .15s;white-space:nowrap}
@@ -191,7 +202,9 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
   .chart-wrap{height:220px}.chart-wrap-lg{height:240px}
   .m-value{font-size:18px}.funnel-info{min-width:80px}
   .val-grid{grid-template-columns:1fr}
-  .page-header{flex-direction:column;gap:4px}
+  .page-header{flex-direction:column;gap:10px;align-items:flex-start}
+  .share-row{width:100%}
+  .scenario-input{flex:1;width:auto}
   .g-table{font-size:10px}
   .main-tab{padding:8px 12px;font-size:11px}
 }
@@ -202,9 +215,21 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 </head>
 <body>
 
+<div id="loaded-banner" style="display:none" class="loaded-banner">
+  <span>Loaded scenario: <strong id="loaded-name"></strong></span>
+  <button onclick="clearScenario()">Clear</button>
+</div>
+
 <div class="page-header">
-  <div class="page-title">Accelerator Series — Business Model</div>
-  <div class="page-sub">Internal planning tool</div>
+  <div>
+    <div class="page-title">Accelerator Series — Business Model</div>
+    <div class="page-sub" style="margin-top:3px">Internal planning tool</div>
+  </div>
+  <div class="share-row">
+    <input type="text" class="scenario-input" id="scenario-name" placeholder="Scenario name…" maxlength="60">
+    <button class="share-btn" id="share-btn" onclick="copyScenarioLink()">Copy link</button>
+    <span class="share-toast" id="share-toast">Copied</span>
+  </div>
 </div>
 
 <div class="main-tabs">
@@ -1011,9 +1036,157 @@ function renderDrivers(ca, pa, combined, fixedYr, yrs) {
     </div>`;
 }
 
+// ── url param sync ────────────────────────────────────────────────────────────
+// Maps short URL param keys → input element IDs
+const PARAM_MAP = {
+  // Carb Accelerator
+  cap: 'ca-price', cac2: 'ca-cogs', cas: 'ca-ship', capr: 'ca-proc',
+  cak: 'ca-cac', cal: 'ca-ltv', car: 'ca-ret',
+  catam: 'ca-tam', casam: 'ca-sam', casom: 'ca-sompct',
+  cay1: 'ca-y1', caag: 'ca-acqgr', cach: 'ca-churn',
+  caop: 'ca-opy', cayr: 'ca-years',
+  // Protein Accelerator
+  pap: 'pa-price', pac: 'pa-cogs', pas: 'pa-ship', papr: 'pa-proc',
+  pak: 'pa-cac', pal: 'pa-ltv', par: 'pa-ret',
+  patam: 'pa-tam', pasam: 'pa-sam', pasom: 'pa-sompct',
+  pay1: 'pa-y1', paag: 'pa-acqgr', pach: 'pa-churn',
+  paop: 'pa-opy', payr: 'pa-years',
+  // Business / fixed costs
+  fcp: 'cost-people', fct: 'cost-tech', fco: 'cost-ops', fcx: 'cost-other',
+  // Valuation
+  vrl: 'rev-mult-lo', vrh: 'rev-mult-hi',
+  vel: 'ebitda-mult-lo', veh: 'ebitda-mult-hi',
+};
+
+// Channel tab index for each product (0=Meta, 1=Google, 2=SEO, 3=Influencer, 4=Email, 5=Coach, 6=Custom)
+const CHANNEL_LABELS = ['Meta ads','Google ads','Organic / SEO','Influencer / affiliate','Email / CRM','Coach referral','Custom'];
+
+function serializeState() {
+  const p = new URLSearchParams();
+  const name = document.getElementById('scenario-name').value.trim();
+  if (name) p.set('name', name);
+  Object.entries(PARAM_MAP).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) p.set(key, el.value);
+  });
+  // Channel tab active index per product
+  ['ca','pa'].forEach(pid => {
+    const tabs = document.querySelectorAll(`#${pid}-chTabs .tab`);
+    tabs.forEach((t,i) => { if (t.classList.contains('active')) p.set(`${pid}ch`, i); });
+  });
+  return p;
+}
+
+function applyParams(p) {
+  Object.entries(PARAM_MAP).forEach(([key, id]) => {
+    if (p.has(key)) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.value = p.get(key);
+        // Fire input event so sliders update their display labels
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  });
+  // Restore active channel tab
+  ['ca','pa'].forEach(pid => {
+    if (p.has(`${pid}ch`)) {
+      const idx = parseInt(p.get(`${pid}ch`));
+      const tabs = document.querySelectorAll(`#${pid}-chTabs .tab`);
+      if (tabs[idx]) {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[idx].classList.add('active');
+        const cac = tabs[idx].dataset.cac;
+        const lo  = tabs[idx].dataset.low;
+        const hi  = tabs[idx].dataset.high;
+        const cacEl   = document.getElementById(`${pid}-cac`);
+        const labelEl = document.getElementById(`${pid}-cacLabel`);
+        if (parseFloat(hi) > 0 && !p.has(pid==='ca'?'cak':'pak')) {
+          if (cacEl)   cacEl.value = cac;
+          if (labelEl) labelEl.textContent = `UK DTC benchmark: £${lo}–£${hi}`;
+        } else if (labelEl && parseFloat(hi) > 0) {
+          labelEl.textContent = `UK DTC benchmark: £${lo}–£${hi}`;
+        } else if (labelEl) {
+          labelEl.textContent = 'Enter your actual CAC';
+        }
+      }
+    }
+  });
+}
+
+function updateUrl() {
+  const p = serializeState();
+  const url = window.location.pathname + '?' + p.toString();
+  history.replaceState(null, '', url);
+}
+
+function copyScenarioLink() {
+  updateUrl();
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn   = document.getElementById('share-btn');
+    const toast = document.getElementById('share-toast');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    toast.classList.add('visible');
+    setTimeout(() => {
+      btn.textContent = 'Copy link';
+      btn.classList.remove('copied');
+      toast.classList.remove('visible');
+    }, 2500);
+  }).catch(() => {
+    // Fallback for file:// protocol
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('share-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy link'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function clearScenario() {
+  history.replaceState(null, '', window.location.pathname);
+  document.getElementById('loaded-banner').style.display = 'none';
+  document.getElementById('scenario-name').value = '';
+}
+
+function loadFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.toString() === '') return;
+  const name = p.get('name') || '';
+  if (name) {
+    document.getElementById('scenario-name').value = name;
+    document.getElementById('loaded-name').textContent = name;
+    document.getElementById('loaded-banner').style.display = 'flex';
+  } else {
+    document.getElementById('loaded-banner').style.display = 'flex';
+    document.getElementById('loaded-name').textContent = 'unnamed';
+  }
+  applyParams(p);
+}
+
+// Update URL on every input change (debounced)
+let urlDebounce;
+document.addEventListener('input', () => {
+  clearTimeout(urlDebounce);
+  urlDebounce = setTimeout(updateUrl, 600);
+});
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('tab') && !e.target.classList.contains('main-tab')) {
+    clearTimeout(urlDebounce);
+    urlDebounce = setTimeout(updateUrl, 100);
+  }
+});
+
 // ── init ──────────────────────────────────────────────────────────────────────
 buildProductUI('ca');
 buildProductUI('pa');
+loadFromUrl();
 </script>
 </body>
 </html>
