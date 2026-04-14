@@ -400,7 +400,7 @@ const TIPS = {
   ltv:   '<strong>Lifetime Value</strong>Total contribution across all orders. CAC on order 1 only; repeat orders at retention cost. Healthy LTV:CAC is 3:1+.',
   ltvm:  '<strong>LTV multiplier</strong>Derived from churn rate and repeat orders/yr. Formula: 1 + (orders/yr ÷ churn rate). Ensures unit economics and growth projections stay consistent.',
   ret:   '<strong>Retention cost</strong>Email, CRM and win-back per repeat order. CAC not re-incurred. Typically £1–6.',
-  cac:   '<strong>Customer Acquisition Cost</strong>Total spend to acquire one new customer. Incurred once only.',
+  cac:   '<strong>Customer Acquisition Cost</strong>Total spend to acquire one new customer. Incurred once only. The blended estimate reflects a realistic early-stage mix across channels.',
   cogs:  '<strong>Cost of Goods Sold</strong>Direct manufacturing cost — ingredients, capsules, packaging, overheads.',
   proc:  '<strong>Payment processing fee</strong>Shopify Payments / Stripe per transaction. Typically 1.5–2.5%.',
   tam:   '<strong>Total Addressable Market</strong>All potential customers for this product category in the UK.',
@@ -603,18 +603,19 @@ function buildProductUI(pid) {
   <div class="section">
     <div class="section-title">Acquisition channel</div>
     <div class="tabs" id="${pid}-chTabs">
+      <button class="tab active" data-cac="15" data-low="10" data-high="25" data-blend="1">Blended</button>
       <button class="tab" data-cac="30" data-low="20" data-high="45">Meta ads</button>
       <button class="tab" data-cac="35" data-low="25" data-high="55">Google ads</button>
       <button class="tab" data-cac="10" data-low="5" data-high="18">Organic / SEO</button>
       <button class="tab" data-cac="18" data-low="10" data-high="28">Influencer / affiliate</button>
       <button class="tab" data-cac="3" data-low="1" data-high="6">Email / CRM</button>
-      <button class="tab active" data-cac="12" data-low="6" data-high="20">Coach referral</button>
+      <button class="tab" data-cac="12" data-low="6" data-high="20">Coach referral</button>
       <button class="tab" data-cac="0" data-low="0" data-high="0">Custom</button>
     </div>
     <div class="surface mt">
       <div class="row-2" style="gap:12px">
-        <div class="field"><label>CAC — first order only (£) ${tipB('cac',false,pid)}</label><input type="number" id="${pid}-cac" value="12" step="0.5" min="0"></div>
-        <div class="field" style="justify-content:flex-end"><div class="hint" id="${pid}-cacLabel" style="margin-top:8px">UK DTC benchmark: £6–£20</div></div>
+        <div class="field"><label>CAC — first order only (£) ${tipB('cac',false,pid)}</label><input type="number" id="${pid}-cac" value="15" step="0.5" min="0"></div>
+        <div class="field" style="justify-content:flex-end"><div class="hint" id="${pid}-cacLabel" style="margin-top:8px;line-height:1.7">Blended estimate: £10–£25<br>40% coach (£12) · 25% organic (£10) · 25% Meta (£30) · 10% email (£3)</div></div>
       </div>
     </div>
   </div>
@@ -681,8 +682,16 @@ function buildProductUI(pid) {
       document.querySelectorAll(`#${pid}-chTabs .tab`).forEach(x => x.classList.remove('active'));
       t.classList.add('active');
       const cac = parseFloat(t.dataset.cac), lo = t.dataset.low, hi = t.dataset.high;
-      if (parseFloat(hi) > 0) { document.getElementById(`${pid}-cac`).value = cac; document.getElementById(`${pid}-cacLabel`).textContent = `UK DTC benchmark: £${lo}–£${hi}`; }
-      else { document.getElementById(`${pid}-cacLabel`).textContent = 'Enter your actual CAC'; }
+      const labelEl = document.getElementById(`${pid}-cacLabel`);
+      if (t.dataset.blend) {
+        document.getElementById(`${pid}-cac`).value = cac;
+        labelEl.innerHTML = 'Blended estimate: £10–£25<br>40% coach (£12) · 25% organic (£10) · 25% Meta (£30) · 10% email (£3)';
+      } else if (parseFloat(hi) > 0) {
+        document.getElementById(`${pid}-cac`).value = cac;
+        labelEl.innerHTML = `UK DTC benchmark: £${lo}–£${hi}`;
+      } else {
+        labelEl.innerHTML = 'Enter your actual CAC';
+      }
       calcProduct(pid);
     });
   });
@@ -1071,7 +1080,7 @@ const PARAM_MAP = {
 };
 
 // Channel tab index for each product (0=Meta, 1=Google, 2=SEO, 3=Influencer, 4=Email, 5=Coach, 6=Custom)
-const CHANNEL_LABELS = ['Meta ads','Google ads','Organic / SEO','Influencer / affiliate','Email / CRM','Coach referral','Custom'];
+const CHANNEL_LABELS = ['Blended','Meta ads','Google ads','Organic / SEO','Influencer / affiliate','Email / CRM','Coach referral','Custom'];
 
 function serializeState() {
   const p = new URLSearchParams();
