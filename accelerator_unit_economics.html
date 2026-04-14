@@ -398,7 +398,7 @@ const TIPS = {
   cm:    '<strong>Contribution margin</strong>Gross profit minus CAC. True profitability of each first order.',
   roas:  '<strong>Break-even ROAS</strong>Minimum revenue per £1 of ad spend to cover CAC. Calculated as price ÷ CAC.',
   ltv:   '<strong>Lifetime Value</strong>Total contribution across all orders. CAC on order 1 only; repeat orders at retention cost. Healthy LTV:CAC is 3:1+.',
-  ltvm:  '<strong>LTV order multiplier</strong>Average total orders per customer. 2.2× = 2.2 orders on average.',
+  ltvm:  '<strong>LTV multiplier</strong>Derived from churn rate and repeat orders/yr. Formula: 1 + (orders/yr ÷ churn rate). Ensures unit economics and growth projections stay consistent.',
   ret:   '<strong>Retention cost</strong>Email, CRM and win-back per repeat order. CAC not re-incurred. Typically £1–6.',
   cac:   '<strong>Customer Acquisition Cost</strong>Total spend to acquire one new customer. Incurred once only.',
   cogs:  '<strong>Cost of Goods Sold</strong>Direct manufacturing cost — ingredients, capsules, packaging, overheads.',
@@ -430,7 +430,11 @@ function getUE(pid) {
   const v = id => parseFloat(document.getElementById(`${pid}-${id}`).value) || 0;
   const price = v('price'), cogs = v('cogs'), ship = v('ship'), proc = v('proc') / 100;
   const cac = v('cac'), retention = v('ret');
-  const ltvMult = parseFloat(document.getElementById(`${pid}-ltv`).value) || 1;
+  // Derive LTV multiplier from churn rate and repeat orders/yr
+  const churnRate = (parseFloat(document.getElementById(`${pid}-churn`).value) || 50) / 100;
+  const opy = parseFloat(document.getElementById(`${pid}-opy`).value) || 1.5;
+  const avgYrsRetained = churnRate > 0 ? 1 / churnRate : 0;
+  const ltvMult = 1 + (opy * avgYrsRetained);
   const procFee = price * proc;
   const gp = price - cogs - ship - procFee;
   const gm = price > 0 ? (gp / price) * 100 : 0;
@@ -440,7 +444,7 @@ function getUE(pid) {
   const repeatOrders = ltvMult - 1;
   const ltv = cm + (gp - retention) * repeatOrders;
   const ltvCacRatio = cac > 0 ? (ltv / cac).toFixed(1) : '—';
-  return { price, cogs, ship, proc, procFee, cac, gp, gm, cm, cmPct, roasBreak, ltv, ltvMult, retention, repeatOrders, ltvCacRatio };
+  return { price, cogs, ship, proc, procFee, cac, gp, gm, cm, cmPct, roasBreak, ltv, ltvMult, retention, repeatOrders, ltvCacRatio, churnRate, opy };
 }
 
 function gmFlag(gm) {
@@ -498,8 +502,13 @@ function calcProduct(pid) {
     <div class="metric"><div class="m-label">Break-even ROAS ${tipB('roas',true,pid)}</div><div class="m-value">${v.roasBreak}x</div><div class="m-sub">Min revenue per £1 ad spend</div></div>
     <div class="metric primary"><div class="m-label">LTV (${v.ltvMult.toFixed(1)} orders) ${tipB('ltv',true,pid)}</div><div class="m-value">${fmt(v.ltv)}</div><div class="m-sub">LTV:CAC ${v.ltvCacRatio}:1</div></div>`;
 
+  // Update derived LTV multiplier display
+  const derivedEl = document.getElementById(`${pid}-ltv-derived`);
+  if (derivedEl) derivedEl.textContent = v.ltvMult.toFixed(1) + '×';
+
   document.getElementById(`${pid}-ltvFormula`).innerHTML =
-    `Order 1: ${fmt(v.gp)} &minus; ${fmt(v.cac)} CAC = <strong>${fmt(v.cm)}</strong>` +
+    `<strong>LTV multiplier derived:</strong> 1 ÷ ${pct(v.churnRate*100)} churn × ${v.opy.toFixed(1)} orders/yr + 1 = <strong>${v.ltvMult.toFixed(1)}× total orders</strong>` +
+    `<br>Order 1: ${fmt(v.gp)} &minus; ${fmt(v.cac)} CAC = <strong>${fmt(v.cm)}</strong>` +
     `<br>Orders 2+: ${v.repeatOrders.toFixed(1)} &times; (${fmt(v.gp)} &minus; ${fmt(v.retention)} retention) = <strong>${fmt((v.gp-v.retention)*v.repeatOrders)}</strong>` +
     `<br>LTV: <strong>${fmt(v.ltv)}</strong> &nbsp;|&nbsp; LTV:CAC <strong>${v.ltvCacRatio}:1</strong>`;
 
@@ -613,7 +622,11 @@ function buildProductUI(pid) {
     <div class="section-title">Lifetime value assumptions</div>
     <div class="surface">
       <div class="row-2" style="gap:12px">
-        <div class="field"><label>Total orders incl. first ${tipB('ltvm',false,pid)}</label><div class="slider-row"><input type="range" id="${pid}-ltv" min="1" max="6" step="0.1" value="2.2"><span class="slider-val" id="${pid}-ltv-val">2.2×</span></div><div class="hint">Industry avg 1.8–3.5×</div></div>
+        <div class="field">
+          <label>LTV multiplier ${tipB('ltvm',false,pid)}</label>
+          <div id="${pid}-ltv-derived" style="font-size:22px;font-weight:700;color:#416BA9;margin-top:4px">—</div>
+          <div class="hint">Derived from churn rate and repeat orders/yr set in growth model below</div>
+        </div>
         <div class="field"><label>Retention cost / repeat order (£) ${tipB('ret',true,pid)}</label><input type="number" id="${pid}-ret" value="3" step="0.5" min="0"><div class="hint">Email / CRM only — CAC not re-incurred</div></div>
       </div>
       <div class="ltv-formula" id="${pid}-ltvFormula"></div>
@@ -675,12 +688,11 @@ function buildProductUI(pid) {
   });
 
   // slider listeners
-  [`${pid}-ltv`,`${pid}-acqgr`,`${pid}-churn`,`${pid}-opy`,`${pid}-years`].forEach(id => {
+  [`${pid}-acqgr`,`${pid}-churn`,`${pid}-opy`,`${pid}-years`].forEach(id => {
     document.getElementById(id).addEventListener('input', function() {
       const valEl = document.getElementById(id+'-val');
       if (!valEl) return;
-      if (id.endsWith('-ltv')) valEl.textContent = parseFloat(this.value).toFixed(1)+'×';
-      else if (id.endsWith('-opy')) valEl.textContent = parseFloat(this.value).toFixed(1)+'×';
+      if (id.endsWith('-opy')) valEl.textContent = parseFloat(this.value).toFixed(1)+'×';
       else if (id.endsWith('-years')) valEl.textContent = this.value+' yrs';
       else valEl.textContent = this.value+'%';
       calcProduct(pid);
@@ -1041,13 +1053,13 @@ function renderDrivers(ca, pa, combined, fixedYr, yrs) {
 const PARAM_MAP = {
   // Carb Accelerator
   cap: 'ca-price', cac2: 'ca-cogs', cas: 'ca-ship', capr: 'ca-proc',
-  cak: 'ca-cac', cal: 'ca-ltv', car: 'ca-ret',
+  cak: 'ca-cac', car: 'ca-ret',
   catam: 'ca-tam', casam: 'ca-sam', casom: 'ca-sompct',
   cay1: 'ca-y1', caag: 'ca-acqgr', cach: 'ca-churn',
   caop: 'ca-opy', cayr: 'ca-years',
   // Protein Accelerator
   pap: 'pa-price', pac: 'pa-cogs', pas: 'pa-ship', papr: 'pa-proc',
-  pak: 'pa-cac', pal: 'pa-ltv', par: 'pa-ret',
+  pak: 'pa-cac', par: 'pa-ret',
   patam: 'pa-tam', pasam: 'pa-sam', pasom: 'pa-sompct',
   pay1: 'pa-y1', paag: 'pa-acqgr', pach: 'pa-churn',
   paop: 'pa-opy', payr: 'pa-years',
