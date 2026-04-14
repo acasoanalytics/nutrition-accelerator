@@ -451,7 +451,8 @@ function getUE(pid) {
   const price = v('price'), cogs = v('cogs'), ship = v('ship'), proc = v('proc') / 100;
   const cac = v('cac'), retention = v('ret');
   // Derive LTV multiplier from churn rate and repeat orders/yr
-  const churnRate = (parseFloat(document.getElementById(`${pid}-churn`).value) || 50) / 100;
+  const churnEl = document.getElementById(`${pid}-churn`);
+  const churnRate = (churnEl && churnEl.value !== '' ? parseFloat(churnEl.value) : 50) / 100;
   const opy = parseFloat(document.getElementById(`${pid}-opy`).value) || 1.5;
   const avgYrsRetained = churnRate > 0 ? 1 / churnRate : 0;
   const ltvMult = 1 + (opy * avgYrsRetained);
@@ -522,9 +523,20 @@ function calcProduct(pid) {
     <div class="metric"><div class="m-label">Break-even ROAS ${tipB('roas',true,pid)}</div><div class="m-value">${v.roasBreak}x</div><div class="m-sub">Min revenue per £1 ad spend</div></div>
     <div class="metric primary"><div class="m-label">LTV (${v.ltvMult.toFixed(1)} orders) ${tipB('ltv',true,pid)}</div><div class="m-value">${fmt(v.ltv)}</div><div class="m-sub">LTV:CAC ${v.ltvCacRatio}:1</div></div>`;
 
-  // Update derived LTV multiplier display
+  // Update derived LTV section displays
   const derivedEl = document.getElementById(`${pid}-ltv-derived`);
   if (derivedEl) derivedEl.textContent = v.ltvMult.toFixed(1) + '×';
+
+  const ltvValEl = document.getElementById(`${pid}-ltv-value`);
+  if (ltvValEl) ltvValEl.textContent = fmt(v.ltv);
+
+  const ltvCacNum = parseFloat(v.ltvCacRatio) || 0;
+  const ltvCacColor = ltvCacNum >= 3 ? '#416BA9' : ltvCacNum >= 1.5 ? '#888' : '#BBBBBB';
+  const ltvCacHint  = ltvCacNum >= 3 ? 'Healthy — above 3:1 benchmark' : ltvCacNum >= 1.5 ? 'Marginal — aim for 3:1+' : 'Weak — below 1.5:1';
+  const ltvCacEl  = document.getElementById(`${pid}-ltvcac-value`);
+  const ltvCacHintEl = document.getElementById(`${pid}-ltvcac-hint`);
+  if (ltvCacEl)  { ltvCacEl.textContent = v.ltvCacRatio + ':1'; ltvCacEl.style.color = ltvCacColor; }
+  if (ltvCacHintEl) ltvCacHintEl.textContent = ltvCacHint;
 
   document.getElementById(`${pid}-ltvFormula`).innerHTML =
     `<strong>LTV multiplier derived:</strong> 1 ÷ ${pct(v.churnRate*100)} churn × ${v.opy.toFixed(1)} orders/yr + 1 = <strong>${v.ltvMult.toFixed(1)}× total orders</strong>` +
@@ -642,12 +654,24 @@ function buildProductUI(pid) {
   <div class="section">
     <div class="section-title">Lifetime value assumptions</div>
     <div class="surface">
-      <div class="row-2" style="gap:12px">
+      <div class="row-3" style="gap:12px;margin-bottom:12px">
         <div class="field">
           <label>LTV multiplier ${tipB('ltvm',false,pid)}</label>
-          <div id="${pid}-ltv-derived" style="font-size:22px;font-weight:700;color:#416BA9;margin-top:4px">—</div>
-          <div class="hint">Derived from churn rate and repeat orders/yr set in growth model below</div>
+          <div id="${pid}-ltv-derived" style="font-size:26px;font-weight:700;color:#416BA9;margin-top:4px;line-height:1">—</div>
+          <div class="hint" style="margin-top:5px">Derived from churn &amp; repeat orders/yr</div>
         </div>
+        <div class="field">
+          <label>Lifetime value (LTV)</label>
+          <div id="${pid}-ltv-value" style="font-size:26px;font-weight:700;color:#222;margin-top:4px;line-height:1">—</div>
+          <div class="hint" style="margin-top:5px">Total contribution per customer</div>
+        </div>
+        <div class="field">
+          <label>LTV:CAC ratio</label>
+          <div id="${pid}-ltvcac-value" style="font-size:26px;font-weight:700;color:#222;margin-top:4px;line-height:1">—</div>
+          <div class="hint" id="${pid}-ltvcac-hint" style="margin-top:5px">Target: 3:1 or above</div>
+        </div>
+      </div>
+      <div class="row-2" style="gap:12px">
         <div class="field"><label>Retention cost / repeat order (£) ${tipB('ret',true,pid)}</label><input type="number" id="${pid}-ret" value="3" step="0.5" min="0"><div class="hint">Email / CRM only — CAC not re-incurred</div></div>
       </div>
       <div class="ltv-formula" id="${pid}-ltvFormula"></div>
@@ -1120,16 +1144,30 @@ function serializeState() {
 }
 
 function applyParams(p) {
+  // Set all values silently first — no dispatchEvent mid-loop
   Object.entries(PARAM_MAP).forEach(([key, id]) => {
     if (p.has(key)) {
       const el = document.getElementById(id);
-      if (el) {
-        el.value = p.get(key);
-        // Fire input event so sliders update their display labels
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-      }
+      if (el) el.value = p.get(key);
     }
   });
+
+  // Manually sync all slider display labels
+  ['ca','pa'].forEach(pid => {
+    const sliders = [
+      { id:`${pid}-acqgr`, suffix:'%' },
+      { id:`${pid}-churn`,  suffix:'%' },
+      { id:`${pid}-opy`,    suffix:'×', fixed:1 },
+      { id:`${pid}-years`,  suffix:' yrs' },
+    ];
+    sliders.forEach(({ id, suffix, fixed }) => {
+      const el  = document.getElementById(id);
+      const lbl = document.getElementById(id+'-val');
+      if (el && lbl) lbl.textContent = (fixed ? parseFloat(el.value).toFixed(fixed) : el.value) + suffix;
+    });
+    // Derived LTV display will update via calcProduct below
+  });
+
   // Restore active channel tab
   ['ca','pa'].forEach(pid => {
     if (p.has(`${pid}ch`)) {
@@ -1138,22 +1176,22 @@ function applyParams(p) {
       if (tabs[idx]) {
         tabs.forEach(t => t.classList.remove('active'));
         tabs[idx].classList.add('active');
-        const cac = tabs[idx].dataset.cac;
-        const lo  = tabs[idx].dataset.low;
-        const hi  = tabs[idx].dataset.high;
-        const cacEl   = document.getElementById(`${pid}-cac`);
+        const lo = tabs[idx].dataset.low, hi = tabs[idx].dataset.high;
         const labelEl = document.getElementById(`${pid}-cacLabel`);
-        if (parseFloat(hi) > 0 && !p.has(pid==='ca'?'cak':'pak')) {
-          if (cacEl)   cacEl.value = cac;
-          if (labelEl) labelEl.textContent = `UK DTC benchmark: £${lo}–£${hi}`;
-        } else if (labelEl && parseFloat(hi) > 0) {
-          labelEl.textContent = `UK DTC benchmark: £${lo}–£${hi}`;
-        } else if (labelEl) {
-          labelEl.textContent = 'Enter your actual CAC';
+        if (tabs[idx].dataset.blend) {
+          if (labelEl) labelEl.innerHTML = 'Blended estimate: £10–£25<br>40% coach (£12) · 25% organic (£10) · 25% Meta (£30) · 10% email (£3)';
+        } else if (parseFloat(hi) > 0) {
+          if (labelEl) labelEl.innerHTML = `UK DTC benchmark: £${lo}–£${hi}`;
+        } else {
+          if (labelEl) labelEl.innerHTML = 'Enter your actual CAC';
         }
       }
     }
   });
+
+  // Single recalc pass for each product after all values are set
+  calcProduct('ca');
+  calcProduct('pa');
 }
 
 function updateUrl() {
@@ -1209,7 +1247,11 @@ function loadFromUrl() {
     document.getElementById('loaded-banner').style.display = 'flex';
     document.getElementById('loaded-name').textContent = 'unnamed';
   }
+  // Suppress URL debounce during restore so it doesn't overwrite with stale values
+  clearTimeout(urlDebounce);
   applyParams(p);
+  // Update URL once cleanly after restore is complete
+  setTimeout(updateUrl, 0);
 }
 
 // Update URL on every input change (debounced)
