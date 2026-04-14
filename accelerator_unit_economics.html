@@ -99,7 +99,7 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 .g-table tr:last-child td{border-bottom:none;font-weight:700;color:#416BA9}
 .g-table .neg{color:#BBBBBB}
 
-.val-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.val-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
 .val-card{border:1px solid #e8e8e8;border-radius:3px;padding:14px 12px;text-align:center}
 .val-card.lo{border-top:2px solid #BBBBBB}
 .val-card.mid{border-top:2px solid #416BA9}
@@ -116,12 +116,75 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 .cost-name{color:#888;font-weight:700}
 .cost-val{color:#222;font-weight:700}
 
+/* drivers */
+.driver-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.driver-card{border:1px solid #e8e8e8;border-radius:3px;padding:14px 14px 12px}
+.driver-card.profit{border-left:3px solid #416BA9}
+.driver-card.exit{border-left:3px solid #222}
+.driver-card.warn{border-left:3px solid #BBBBBB}
+.driver-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-bottom:10px}
+.driver-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.driver-item:last-child{margin-bottom:0}
+.driver-bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;padding-top:1px}
+.driver-rank{width:18px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.driver-rank.hi{background:#416BA9;color:#fff}
+.driver-rank.mid{background:#e8e8e8;color:#888}
+.driver-rank.lo{background:#f5f5f5;color:#bbb}
+.driver-impact{width:2px;flex:1;min-height:12px;border-radius:1px;background:#f0f0f0}
+.driver-body{flex:1}
+.driver-name{font-size:12px;font-weight:700;color:#222;margin-bottom:2px}
+.driver-desc{font-size:11px;color:#888;line-height:1.5}
+.driver-value{font-size:11px;font-weight:700;color:#416BA9;margin-top:3px}
+.driver-value.neg{color:#BBBBBB}
+.status-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:3px;margin-bottom:1.25rem}
+.status-row.good{background:#f0f5fb;border:1px solid #d0e0f0}
+.status-row.warn{background:#f8f8f8;border:1px solid #e8e8e8}
+.status-row.bad{background:#fafafa;border:1px solid #ebebeb}
+.status-icon{font-size:14px;flex-shrink:0}
+.status-text{font-size:12px;color:#444;line-height:1.5}
+.status-text strong{color:#222;font-weight:700}
+.sensitivity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.sens-card{background:#f8f8f8;border:1px solid #f0f0f0;border-radius:3px;padding:12px}
+.sens-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#aaa;margin-bottom:6px}
+.sens-change{font-size:11px;color:#888;margin-bottom:4px}
+.sens-impact{font-size:14px;font-weight:700;color:#416BA9}
+.sens-impact.neg{color:#BBBBBB}
+
 .prod-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:2px;font-size:11px;font-weight:700;margin-bottom:1.25rem}
 .prod-pill.ca{background:#e8f0f8;color:#416BA9}
 .prod-pill.pa{background:#f5f0f8;color:#7a3a9a}
 
-@media(max-width:680px){
-  .row-3,.row-4{grid-template-columns:1fr 1fr}
+/* drivers section */
+.driver-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.driver-card{background:#f8f8f8;border:1px solid #f0f0f0;border-radius:3px;padding:14px}
+.driver-card-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-bottom:10px}
+.driver-row{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f0f0f0;font-size:12px}
+.driver-row:last-child{border-bottom:none}
+.driver-name{color:#888;font-weight:700;flex:1}
+.driver-val{font-weight:700;color:#222;text-align:right;min-width:60px}
+.driver-val.pos{color:#416BA9}
+.driver-val.neg{color:#BBBBBB}
+.driver-val.warn{color:#888}
+.driver-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;margin-left:8px;text-transform:uppercase;letter-spacing:.04em;vertical-align:middle}
+.driver-badge.high{background:#e8f0f8;color:#416BA9}
+.driver-badge.med{background:#f0f0f0;color:#888}
+.driver-badge.low{background:#f5f5f5;color:#bbb}
+.sensitivity-table{width:100%;border-collapse:collapse;font-size:11px}
+.sensitivity-table th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#aaa;text-align:right;padding:6px 8px;border-bottom:1px solid #f0f0f0}
+.sensitivity-table th:first-child{text-align:left}
+.sensitivity-table td{padding:7px 8px;text-align:right;border-bottom:1px solid #f8f8f8;color:#222;font-size:11px}
+.sensitivity-table td:first-child{text-align:left;color:#888;font-weight:700}
+.sensitivity-table tr:last-child td{border-bottom:none}
+.breakeven-bar{height:6px;background:#f0f0f0;border-radius:3px;margin-top:6px;overflow:hidden}
+.breakeven-fill{height:100%;background:#416BA9;border-radius:3px;transition:width .4s}
+.exit-scenario{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.exit-cell{text-align:center;padding:10px 8px;border:1px solid #f0f0f0;border-radius:3px}
+.exit-cell-label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#aaa;margin-bottom:6px}
+.exit-cell-val{font-size:16px;font-weight:700;color:#222}
+.exit-cell.featured .exit-cell-val{color:#416BA9}
+.exit-cell-sub{font-size:9px;color:#bbb;margin-top:3px}
+@media(max-width:680px){.driver-grid{grid-template-columns:1fr}.exit-scenario{grid-template-columns:1fr}}
+
   .row-2{grid-template-columns:1fr}
   .metric-grid,.metric-grid-2{grid-template-columns:1fr 1fr}
   .bm-grid{grid-template-columns:1fr}
@@ -215,31 +278,47 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 
   <div class="section">
     <div class="section-title">Valuation estimate — end of period</div>
-    <div class="surface" style="margin-bottom:14px">
-      <div class="row-3" style="gap:12px">
-        <div class="field">
-          <label>About these estimates <span class="tooltip-wrap"><button class="info-btn" data-tip="valmethod">?</button><div class="tooltip-box" id="tip-valmethod"><strong>Valuation method</strong>Revenue multiples are common for early-stage DTC brands pre-profitability. EBITDA multiples apply once the business is cash-generative. All three scenarios are shown below.</div></span></label>
-          <div class="hint" style="margin-top:4px">Revenue and EBITDA multiples are shown. Adjust ranges to reflect your view of risk and growth.</div>
-        </div>
-        <div class="field">
-          <label>Revenue multiple range (×) <span class="tooltip-wrap"><button class="info-btn" data-tip="revmult">?</button><div class="tooltip-box" id="tip-revmult"><strong>Revenue multiple</strong>Small DTC supplement brands typically sell for 0.5–2.5× annual revenue. Strong margins and growth trajectory command the higher end.</div></span></label>
-          <div class="row-2" style="gap:8px">
-            <div class="field"><label style="font-size:10px">Low</label><input type="number" id="rev-mult-lo" value="0.5" step="0.1" min="0"></div>
-            <div class="field"><label style="font-size:10px">High</label><input type="number" id="rev-mult-hi" value="2.0" step="0.1" min="0"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+      <div>
+        <div class="surface" style="margin-bottom:10px">
+          <div class="field">
+            <label>Revenue multiple range (×) <span class="tooltip-wrap"><button class="info-btn" data-tip="revmult">?</button><div class="tooltip-box" id="tip-revmult"><strong>Revenue multiple</strong>Small DTC supplement brands typically sell for 0.5–2.5× annual revenue. Strong margins and growth trajectory command the higher end.</div></span></label>
+            <div class="row-2" style="gap:8px;margin-top:4px">
+              <div class="field"><label style="font-size:10px">Low</label><input type="number" id="rev-mult-lo" value="0.5" step="0.1" min="0"></div>
+              <div class="field"><label style="font-size:10px">High</label><input type="number" id="rev-mult-hi" value="2.0" step="0.1" min="0"></div>
+            </div>
+            <div class="hint" style="margin-top:6px">Applied to final year annual revenue. Most applicable pre-profitability.</div>
           </div>
         </div>
-        <div class="field">
-          <label>EBITDA multiple range (×) <span class="tooltip-wrap"><button class="info-btn right" data-tip="ebitdamult">?</button><div class="tooltip-box right" id="tip-ebitdamult"><strong>EBITDA multiple</strong>Profitable consumer brands typically sell for 3–8× EBITDA. Early-stage brands with strong growth may command 4–6×. Only meaningful once EBITDA is positive.</div></span></label>
-          <div class="row-2" style="gap:8px">
-            <div class="field"><label style="font-size:10px">Low</label><input type="number" id="ebitda-mult-lo" value="3" step="0.5" min="0"></div>
-            <div class="field"><label style="font-size:10px">High</label><input type="number" id="ebitda-mult-hi" value="6" step="0.5" min="0"></div>
-          </div>
-        </div>
+        <div id="val-rev"></div>
       </div>
+
+      <div>
+        <div class="surface" style="margin-bottom:10px">
+          <div class="field">
+            <label>EBITDA multiple range (×) <span class="tooltip-wrap"><button class="info-btn right" data-tip="ebitdamult">?</button><div class="tooltip-box right" id="tip-ebitdamult"><strong>EBITDA multiple</strong>Profitable consumer brands typically sell for 3–8× EBITDA. Early-stage brands with strong growth may command 4–6×. Only meaningful once EBITDA is positive.</div></span></label>
+            <div class="row-2" style="gap:8px;margin-top:4px">
+              <div class="field"><label style="font-size:10px">Low</label><input type="number" id="ebitda-mult-lo" value="3" step="0.5" min="0"></div>
+              <div class="field"><label style="font-size:10px">High</label><input type="number" id="ebitda-mult-hi" value="6" step="0.5" min="0"></div>
+            </div>
+            <div class="hint" style="margin-top:6px">Requires positive EBITDA. Most applicable once the business is cash-generative.</div>
+          </div>
+        </div>
+        <div id="val-ebitda"></div>
+      </div>
+
     </div>
-    <div class="val-grid" id="valuation"></div>
-    <div class="hint" style="margin-top:8px;line-height:1.6">Valuations are illustrative. Revenue multiples apply to growing brands pre-profitability; EBITDA multiples require positive cash generation. These estimates do not account for IP, brand equity, or strategic premium from a trade buyer.</div>
+    <div class="hint" style="margin-top:10px;line-height:1.6">Valuations are illustrative and do not account for IP, brand equity, or strategic premium from a trade buyer.</div>
   </div>
+
+  <div class="divider"></div>
+
+  <div class="section" id="drivers-section">
+    <div class="section-title">Key drivers</div>
+    <div id="drivers-content"></div>
+  </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -311,7 +390,14 @@ const tipB = (key, right, prefix) => {
   return `<span class="tooltip-wrap"><button class="info-btn${right?' right':''}" data-tip="${id}" data-tipkey="${key}">?</button><div class="tooltip-box${right?' right':''}" id="tip-${id}">${TIPS[key]||''}</div></span>`;
 };
 
-const bms = [{name:'Meta ads',low:20,high:45,pct:70},{name:'Google ads',low:25,high:55,pct:85},{name:'Organic / SEO',low:5,high:18,pct:25},{name:'Influencer',low:10,high:28,pct:40},{name:'Email / CRM',low:1,high:6,pct:8},{name:'Coach referral',low:6,high:20,pct:30}];
+const bms = [
+  {name:'Google ads',low:25,high:55,pct:100},
+  {name:'Meta ads',low:20,high:45,pct:80},
+  {name:'Influencer',low:10,high:28,pct:49},
+  {name:'Coach referral',low:6,high:20,pct:33},
+  {name:'Organic / SEO',low:5,high:18,pct:28},
+  {name:'Email / CRM',low:1,high:6,pct:9},
+];
 const bmHtml = bms.map(b => `<div class="bm-row"><span class="bm-name">${b.name}</span><div class="bm-bar"><div class="bm-fill" style="width:${b.pct}%"></div></div><span class="bm-range">£${b.low}–£${b.high}</span></div>`).join('');
 
 // ── get UE values ─────────────────────────────────────────────────────────────
@@ -483,18 +569,18 @@ function buildProductUI(pid) {
   <div class="section">
     <div class="section-title">Acquisition channel</div>
     <div class="tabs" id="${pid}-chTabs">
-      <button class="tab active" data-cac="30" data-low="20" data-high="45">Meta ads</button>
+      <button class="tab" data-cac="30" data-low="20" data-high="45">Meta ads</button>
       <button class="tab" data-cac="35" data-low="25" data-high="55">Google ads</button>
       <button class="tab" data-cac="10" data-low="5" data-high="18">Organic / SEO</button>
       <button class="tab" data-cac="18" data-low="10" data-high="28">Influencer / affiliate</button>
       <button class="tab" data-cac="3" data-low="1" data-high="6">Email / CRM</button>
-      <button class="tab" data-cac="12" data-low="6" data-high="20">Coach referral</button>
+      <button class="tab active" data-cac="12" data-low="6" data-high="20">Coach referral</button>
       <button class="tab" data-cac="0" data-low="0" data-high="0">Custom</button>
     </div>
     <div class="surface mt">
       <div class="row-2" style="gap:12px">
-        <div class="field"><label>CAC — first order only (£) ${tipB('cac',false,pid)}</label><input type="number" id="${pid}-cac" value="30" step="0.5" min="0"></div>
-        <div class="field" style="justify-content:flex-end"><div class="hint" id="${pid}-cacLabel" style="margin-top:8px">UK DTC benchmark: £20–£45</div></div>
+        <div class="field"><label>CAC — first order only (£) ${tipB('cac',false,pid)}</label><input type="number" id="${pid}-cac" value="12" step="0.5" min="0"></div>
+        <div class="field" style="justify-content:flex-end"><div class="hint" id="${pid}-cacLabel" style="margin-top:8px">UK DTC benchmark: £6–£20</div></div>
       </div>
     </div>
   </div>
@@ -662,8 +748,8 @@ function calcBiz() {
       datasets:[
         { type:'bar', label:'PA revenue', data:combined.map(r=>r.paRev), backgroundColor:PA_COLOR+'99', borderRadius:0, yAxisID:'y', stack:'rev', order:2 },
         { type:'bar', label:'CA revenue', data:combined.map(r=>r.caRev), backgroundColor:CA_COLOR+'99', borderRadius:2, yAxisID:'y', stack:'rev', order:1 },
-        { type:'line', label:'Total contribution', data:combined.map(r=>r.totalContrib), borderColor:DV_TEAL, backgroundColor:'transparent', pointRadius:3, pointBackgroundColor:DV_TEAL, tension:.35, yAxisID:'y', borderWidth:2, order:0 },
-        { type:'line', label:'EBITDA (after fixed costs)', data:combined.map(r=>r.ebitda), borderColor:DV_GRAY, backgroundColor:'transparent', pointRadius:3, pointBackgroundColor:DV_GRAY, tension:.35, yAxisID:'y', borderWidth:2, borderDash:[4,3], order:0 },
+        { type:'line', label:'Total contribution', data:combined.map(r=>r.totalContrib), borderColor:DV_TEAL, backgroundColor:'transparent', pointRadius:3, pointBackgroundColor:DV_TEAL, tension:.35, yAxisID:'y2', borderWidth:2, order:0 },
+        { type:'line', label:'EBITDA (after fixed costs)', data:combined.map(r=>r.ebitda), borderColor:DV_GRAY, backgroundColor:'transparent', pointRadius:3, pointBackgroundColor:DV_GRAY, tension:.35, yAxisID:'y2', borderWidth:2, borderDash:[4,3], order:0 },
       ]
     },
     options:{
@@ -674,7 +760,8 @@ function calcBiz() {
       },
       scales:{
         x:{ stacked:true, grid:{display:false}, ticks:{color:'#aaa',font:{size:11}}, border:{display:false} },
-        y:{ stacked:true, grid:{color:'#f0f0f0'}, ticks:{color:'#aaa',font:{size:11},callback:v=>fmtK(v)}, border:{display:false} }
+        y:{ stacked:true, grid:{color:'#f0f0f0'}, ticks:{color:'#aaa',font:{size:11},callback:v=>fmtK(v)}, border:{display:false}, title:{display:true,text:'Revenue (£)',color:'#bbb',font:{size:10}} },
+        y2:{ position:'right', grid:{display:false}, ticks:{color:'#aaa',font:{size:11},callback:v=>fmtK(v)}, border:{display:false}, title:{display:true,text:'Contribution / EBITDA (£)',color:'#bbb',font:{size:10}} }
       }
     }
   });
@@ -700,31 +787,230 @@ function calcBiz() {
   const last = combined[combined.length - 1];
   const revLo = n('rev-mult-lo'), revHi = n('rev-mult-hi');
   const eLo   = n('ebitda-mult-lo'), eHi = n('ebitda-mult-hi');
-  document.getElementById('valuation').innerHTML = `
-    <div class="val-card lo">
-      <div class="val-label">Revenue — low (${revLo}×)</div>
-      <div class="val-value">${fmtK(last.totalRev*revLo)}</div>
-      <div class="val-sub">Year ${yrs} revenue: ${fmtK(last.totalRev)}</div>
-      <div class="val-method">${revLo}× revenue multiple</div>
-    </div>
+  document.getElementById('val-rev').innerHTML = `
     <div class="val-card mid">
-      <div class="val-label">Revenue — high (${revHi}×)</div>
-      <div class="val-value">${fmtK(last.totalRev*revHi)}</div>
+      <div class="val-label">Revenue multiple (${revLo}–${revHi}×)</div>
+      <div class="val-value">${fmtK(last.totalRev*revLo)} – ${fmtK(last.totalRev*revHi)}</div>
       <div class="val-sub">Year ${yrs} revenue: ${fmtK(last.totalRev)}</div>
-      <div class="val-method">${revHi}× revenue multiple</div>
-    </div>
+      <div class="val-method">${revLo}–${revHi}× applied to annual revenue</div>
+    </div>`;
+  document.getElementById('val-ebitda').innerHTML = `
     <div class="val-card ${last.ebitda>0?'hi':'muted'}">
-      <div class="val-label">EBITDA (${eLo}–${eHi}×)</div>
+      <div class="val-label">EBITDA multiple (${eLo}–${eHi}×)</div>
       <div class="val-value">${last.ebitda>0 ? fmtK(last.ebitda*eLo)+' – '+fmtK(last.ebitda*eHi) : 'Loss-making'}</div>
       <div class="val-sub">Year ${yrs} EBITDA: ${fmtK(last.ebitda)}</div>
       <div class="val-method">${last.ebitda>0?'Applies once EBITDA positive':'Reduce fixed costs or grow revenue'}</div>
     </div>`;
+
+  renderDrivers(ca, pa, combined, fixedYr, yrs);
 }
 
 // ── biz input listeners ───────────────────────────────────────────────────────
 ['cost-people','cost-tech','cost-ops','cost-other','rev-mult-lo','rev-mult-hi','ebitda-mult-lo','ebitda-mult-hi'].forEach(id => {
   document.addEventListener('input', e => { if (e.target.id === id && document.getElementById('panel-biz').classList.contains('active')) calcBiz(); });
 });
+// ── key drivers ───────────────────────────────────────────────────────────────
+function renderDrivers(ca, pa, combined, fixedYr, yrs) {
+  const last = combined[combined.length - 1];
+
+  // ── path to profitability ──────────────────────────────────────────────────
+  const breakevenYear = combined.find(r => r.ebitda >= 0);
+  const breakevenCustomers = fixedYr > 0
+    ? Math.ceil(fixedYr / ((ca.cm + pa.cm) / 2))  // blended first-order contribution
+    : 0;
+  const totalCustomersLast = last.caActive + last.paActive;
+  const ebitdaMarginLast = last.totalRev > 0 ? (last.ebitda / last.totalRev) * 100 : 0;
+  const contribMarginLast = last.totalRev > 0 ? (last.totalContrib / last.totalRev) * 100 : 0;
+
+  // ── sensitivity: what does a 10% improvement in each lever do to final-year EBITDA? ──
+  // Base EBITDA = last.ebitda
+  // Lever 1: reduce CA CAC by 10%
+  const caNewCustLast = combined[combined.length-1].caNewCust || 0;
+  const paNewCustLast = combined[combined.length-1].paNewCust || 0;
+
+  // Re-derive final year figures for sensitivity — use combined row directly
+  const baseFYEbitda = last.ebitda;
+  const baseFYRev    = last.totalRev;
+  const baseFYContrib= last.totalContrib;
+
+  // Δ from 10% CAC reduction — saves CAC on new customers only
+  const caNewCusts = last.caActive - (combined.length > 1 ? combined[combined.length-2].caActive*(1-(parseFloat(document.getElementById('ca-churn').value)||50)/100) : 0);
+  const paNewCusts = last.paActive - (combined.length > 1 ? combined[combined.length-2].paActive*(1-(parseFloat(document.getElementById('pa-churn').value)||50)/100) : 0);
+
+  // Simpler: estimate new customers in final year as y1*(1+acqGr)^(yrs-1)
+  const caAcqGrV = (parseFloat(document.getElementById('ca-acqgr').value)||50)/100;
+  const paAcqGrV = (parseFloat(document.getElementById('pa-acqgr').value)||60)/100;
+  const caY1V    = parseFloat(document.getElementById('ca-y1').value)||200;
+  const paY1V    = parseFloat(document.getElementById('pa-y1').value)||100;
+  const caNewFY  = caY1V * Math.pow(1+caAcqGrV, yrs-1);
+  const paNewFY  = paY1V * Math.pow(1+paAcqGrV, yrs-1);
+
+  const dCacReduction   = (ca.cac*0.1*caNewFY) + (pa.cac*0.1*paNewFY);
+  const dPriceIncrease  = (ca.price*0.05*(last.caActive*(parseFloat(document.getElementById('ca-opy').value)||1.5))) +
+                          (pa.price*0.05*(last.paActive*(parseFloat(document.getElementById('pa-opy').value)||1.5)));
+  const dChurnReduction = (ca.gp - ca.retention) * (last.caActive*0.1) * (parseFloat(document.getElementById('ca-opy').value)||1.5) +
+                          (pa.gp - pa.retention) * (last.paActive*0.1) * (parseFloat(document.getElementById('pa-opy').value)||1.5);
+  const dFixedCostCut   = fixedYr * 0.1;
+  const dCogsReduction  = (ca.cogs*0.1 * last.caActive * (parseFloat(document.getElementById('ca-opy').value)||1.5)) +
+                          (pa.cogs*0.1 * last.paActive * (parseFloat(document.getElementById('pa-opy').value)||1.5));
+
+  const levers = [
+    { name:`5% price increase (both products)`,  delta:dPriceIncrease,  pct: baseFYRev>0?dPriceIncrease/baseFYRev*100:0 },
+    { name:`10% churn reduction (both products)`,delta:dChurnReduction, pct: baseFYRev>0?dChurnReduction/baseFYRev*100:0 },
+    { name:`10% CAC reduction (both products)`,  delta:dCacReduction,   pct: baseFYRev>0?dCacReduction/baseFYRev*100:0 },
+    { name:`10% fixed cost reduction`,           delta:dFixedCostCut,   pct: baseFYRev>0?dFixedCostCut/baseFYRev*100:0 },
+    { name:`10% COGS reduction (both products)`, delta:dCogsReduction,  pct: baseFYRev>0?dCogsReduction/baseFYRev*100:0 },
+  ].sort((a,b) => b.delta - a.delta);
+
+  // ── LTV:CAC quality ─────────────────────────────────────────────────────────
+  const caLTVCAC = parseFloat(ca.ltvCacRatio) || 0;
+  const paLTVCAC = parseFloat(pa.ltvCacRatio) || 0;
+  const ltvCacLabel = (r) => r >= 3 ? {text:'Healthy',cls:'high'} : r >= 1.5 ? {text:'Marginal',cls:'med'} : {text:'Weak',cls:'low'};
+
+  // ── exit value sensitivity ───────────────────────────────────────────────────
+  const revMultLo = parseFloat(document.getElementById('rev-mult-lo').value)||0.5;
+  const revMultHi = parseFloat(document.getElementById('rev-mult-hi').value)||2.0;
+  const eLo       = parseFloat(document.getElementById('ebitda-mult-lo').value)||3;
+  const eHi       = parseFloat(document.getElementById('ebitda-mult-hi').value)||6;
+  const revMid    = (revMultLo+revMultHi)/2;
+  const eMid      = (eLo+eHi)/2;
+
+  // What revenue is needed for a £1M exit at current midpoint multiple?
+  const revFor1M  = revMid > 0 ? 1000000 / revMid : null;
+  const revFor5M  = revMid > 0 ? 5000000 / revMid : null;
+  const ebitdaFor1M = eMid > 0 ? 1000000 / eMid : null;
+
+  const progressPct = Math.min(100, baseFYRev > 0 && revFor1M > 0 ? (baseFYRev/revFor1M)*100 : 0);
+  document.getElementById('drivers-content').innerHTML = `
+    <div class="driver-grid">
+
+      <div class="driver-card">
+        <div class="driver-card-title">Path to profitability</div>
+        <div class="driver-row">
+          <span class="driver-name">Breakeven year</span>
+          <span class="driver-val ${breakevenYear?'pos':'neg'}">${breakevenYear?'Year '+breakevenYear.y:'Not in period'}</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">Approx. breakeven customers</span>
+          <span class="driver-val">${fmtN(breakevenCustomers)}</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">Customers at end of period</span>
+          <span class="driver-val ${totalCustomersLast>=breakevenCustomers?'pos':'warn'}">${fmtN(totalCustomersLast)}</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">Final year EBITDA margin</span>
+          <span class="driver-val ${ebitdaMarginLast>=0?'pos':'neg'}">${ebitdaMarginLast.toFixed(1)}%</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">Final year contribution margin</span>
+          <span class="driver-val">${contribMarginLast.toFixed(1)}%</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">Fixed costs as % of final contribution</span>
+          <span class="driver-val ${last.totalContrib>fixedYr?'pos':'neg'}">${last.totalContrib>0?(fixedYr/last.totalContrib*100).toFixed(0)+'%':'—'}</span>
+        </div>
+      </div>
+
+      <div class="driver-card">
+        <div class="driver-card-title">Unit economics quality</div>
+        <div class="driver-row">
+          <span class="driver-name">CA gross margin</span>
+          <span class="driver-val pos">${pct(ca.gm)}</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">PA gross margin</span>
+          <span class="driver-val pos">${pct(pa.gm)}</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">CA LTV:CAC ratio</span>
+          <span class="driver-val">${ca.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(caLTVCAC).cls}">${ltvCacLabel(caLTVCAC).text}</span></span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">PA LTV:CAC ratio</span>
+          <span class="driver-val">${pa.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(paLTVCAC).cls}">${ltvCacLabel(paLTVCAC).text}</span></span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">CA break-even ROAS</span>
+          <span class="driver-val">${ca.roasBreak}×</span>
+        </div>
+        <div class="driver-row">
+          <span class="driver-name">PA break-even ROAS</span>
+          <span class="driver-val">${pa.roasBreak}×</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="driver-card" style="margin-bottom:12px">
+      <div class="driver-card-title">EBITDA sensitivity — impact of a 10% improvement in each lever (final year)</div>
+      <table class="sensitivity-table">
+        <thead><tr>
+          <th style="text-align:left">Lever</th>
+          <th>EBITDA uplift</th>
+          <th>As % of revenue</th>
+          <th>New EBITDA</th>
+          <th>Impact</th>
+        </tr></thead>
+        <tbody>
+          ${levers.map((l,i) => `<tr>
+            <td>${l.name}</td>
+            <td style="color:#416BA9">+${fmtK(l.delta)}</td>
+            <td>+${l.pct.toFixed(1)}%</td>
+            <td style="${(baseFYEbitda+l.delta)>=0?'color:#416BA9':'color:#BBBBBB'}">${fmtK(baseFYEbitda+l.delta)}</td>
+            <td><span class="driver-badge ${i===0?'high':i<=1?'med':'low'}">${i===0?'Highest':i<=1?'High':'Moderate'}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="driver-card">
+      <div class="driver-card-title">Exit value — what drives it</div>
+      <div class="driver-row">
+        <span class="driver-name">Primary driver pre-profitability</span>
+        <span class="driver-val">Revenue growth</span>
+      </div>
+      <div class="driver-row">
+        <span class="driver-name">Primary driver post-profitability</span>
+        <span class="driver-val">EBITDA margin</span>
+      </div>
+      <div class="driver-row">
+        <span class="driver-name">Final year revenue</span>
+        <span class="driver-val pos">${fmtK(baseFYRev)}</span>
+      </div>
+      <div class="driver-row">
+        <span class="driver-name">Revenue needed for £1M exit (${revMid.toFixed(1)}× mid)</span>
+        <span class="driver-val">${revFor1M?fmtK(revFor1M):'—'}</span>
+      </div>
+      <div class="driver-row">
+        <span class="driver-name">Revenue needed for £5M exit (${revMid.toFixed(1)}× mid)</span>
+        <span class="driver-val">${revFor5M?fmtK(revFor5M):'—'}</span>
+      </div>
+      <div class="driver-row">
+        <span class="driver-name">EBITDA needed for £1M exit (${eMid.toFixed(1)}× mid)</span>
+        <span class="driver-val">${ebitdaFor1M?fmtK(ebitdaFor1M):'—'}</span>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;font-weight:700;margin-bottom:4px">
+          <span>Progress to £1M exit (revenue basis)</span>
+          <span>${progressPct.toFixed(0)}%</span>
+        </div>
+        <div class="breakeven-bar"><div class="breakeven-fill" style="width:${progressPct}%"></div></div>
+      </div>
+      <div class="exit-scenario" style="grid-template-columns:1fr 1fr">
+        <div class="exit-cell featured">
+          <div class="exit-cell-label">Revenue (${revMultLo}–${revMultHi}×)</div>
+          <div class="exit-cell-val">${fmtK(baseFYRev*revMultLo)} – ${fmtK(baseFYRev*revMultHi)}</div>
+          <div class="exit-cell-sub">Revenue multiple range</div>
+        </div>
+        <div class="exit-cell ${last.ebitda>0?'':'muted'}">
+          <div class="exit-cell-label">EBITDA (${eLo}–${eHi}×)</div>
+          <div class="exit-cell-val">${last.ebitda>0?fmtK(last.ebitda*eLo)+' – '+fmtK(last.ebitda*eHi):'Loss-making'}</div>
+          <div class="exit-cell-sub">${last.ebitda>0?'EBITDA multiple range':'Requires profitability'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── init ──────────────────────────────────────────────────────────────────────
 buildProductUI('ca');
 buildProductUI('pa');
