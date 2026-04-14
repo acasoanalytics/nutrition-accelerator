@@ -194,7 +194,27 @@ body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222
 .exit-cell-val{font-size:16px;font-weight:700;color:#222}
 .exit-cell.featured .exit-cell-val{color:#416BA9}
 .exit-cell-sub{font-size:9px;color:#bbb;margin-top:3px}
-@media(max-width:680px){.driver-grid{grid-template-columns:1fr}.exit-scenario{grid-template-columns:1fr}}
+/* narrative */
+.narr-section{margin-bottom:1.5rem}
+.narr-heading{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#416BA9;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e8f0f8}
+.narr-heading.dark{color:#222;border-bottom-color:#e8e8e8}
+.narr-heading.amber{color:#8a6200;border-bottom-color:#fef3d0}
+.narrative{font-size:13px;color:#444;line-height:1.8;margin-bottom:10px}
+.narrative strong{font-weight:700;color:#222}
+.narrative em{font-style:normal;font-weight:700;color:#416BA9}
+.callout{background:#f8f8f8;border-left:3px solid #416BA9;border-radius:0 3px 3px 0;padding:10px 14px;margin:10px 0;font-size:12px;color:#444;line-height:1.7}
+.callout.warn{border-left-color:#BBBBBB;background:#f9f9f9}
+.callout.positive{border-left-color:#2d6645;background:#f2f8f4}
+.callout strong{font-weight:700;color:#222}
+.narr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.focus-item{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid #f0f0f0}
+.focus-item:last-child{border-bottom:none}
+.focus-num{font-size:18px;font-weight:700;color:#e0e0e0;min-width:24px;line-height:1.2}
+.focus-body{flex:1}
+.focus-title{font-size:12px;font-weight:700;color:#222;margin-bottom:2px}
+.focus-desc{font-size:11px;color:#888;line-height:1.5}
+.focus-impact{font-size:10px;font-weight:700;color:#416BA9;margin-top:3px}
+@media(max-width:680px){.narr-grid{grid-template-columns:1fr}}
 
   .row-2{grid-template-columns:1fr}
   .metric-grid,.metric-grid-2{grid-template-columns:1fr 1fr}
@@ -857,205 +877,197 @@ function calcBiz() {
 });
 // ── key drivers ───────────────────────────────────────────────────────────────
 function renderDrivers(ca, pa, combined, fixedYr, yrs) {
-  const last = combined[combined.length - 1];
+  const last      = combined[combined.length - 1];
+  const first     = combined[0];
+  const baseFYRev = last.totalRev;
+  const baseFYContrib = last.totalContrib;
+  const baseFYEbitda  = last.ebitda;
 
-  // ── path to profitability ──────────────────────────────────────────────────
-  const breakevenYear = combined.find(r => r.ebitda >= 0);
-  const breakevenCustomers = fixedYr > 0
-    ? Math.ceil(fixedYr / ((ca.cm + pa.cm) / 2))  // blended first-order contribution
-    : 0;
+  const breakevenYear      = combined.find(r => r.ebitda >= 0);
   const totalCustomersLast = last.caActive + last.paActive;
-  const ebitdaMarginLast = last.totalRev > 0 ? (last.ebitda / last.totalRev) * 100 : 0;
-  const contribMarginLast = last.totalRev > 0 ? (last.totalContrib / last.totalRev) * 100 : 0;
+  const blendedCm          = (ca.cm + pa.cm) / 2;
+  const breakevenCustomers = fixedYr > 0 && blendedCm > 0 ? Math.ceil(fixedYr / blendedCm) : 0;
+  const ebitdaMarginLast   = baseFYRev > 0 ? (baseFYEbitda / baseFYRev) * 100 : 0;
+  const contribMarginLast  = baseFYRev > 0 ? (baseFYContrib / baseFYRev) * 100 : 0;
+  const caLTVCAC  = parseFloat(ca.ltvCacRatio) || 0;
+  const paLTVCAC  = parseFloat(pa.ltvCacRatio) || 0;
 
-  // ── sensitivity: what does a 10% improvement in each lever do to final-year EBITDA? ──
-  // Base EBITDA = last.ebitda
-  // Lever 1: reduce CA CAC by 10%
-  const caNewCustLast = combined[combined.length-1].caNewCust || 0;
-  const paNewCustLast = combined[combined.length-1].paNewCust || 0;
-
-  // Re-derive final year figures for sensitivity — use combined row directly
-  const baseFYEbitda = last.ebitda;
-  const baseFYRev    = last.totalRev;
-  const baseFYContrib= last.totalContrib;
-
-  // Δ from 10% CAC reduction — saves CAC on new customers only
-  const caNewCusts = last.caActive - (combined.length > 1 ? combined[combined.length-2].caActive*(1-(parseFloat(document.getElementById('ca-churn').value)||50)/100) : 0);
-  const paNewCusts = last.paActive - (combined.length > 1 ? combined[combined.length-2].paActive*(1-(parseFloat(document.getElementById('pa-churn').value)||50)/100) : 0);
-
-  // Simpler: estimate new customers in final year as y1*(1+acqGr)^(yrs-1)
+  // sensitivity levers
   const caAcqGrV = (parseFloat(document.getElementById('ca-acqgr').value)||50)/100;
   const paAcqGrV = (parseFloat(document.getElementById('pa-acqgr').value)||60)/100;
   const caY1V    = parseFloat(document.getElementById('ca-y1').value)||200;
   const paY1V    = parseFloat(document.getElementById('pa-y1').value)||100;
+  const caOpy    = parseFloat(document.getElementById('ca-opy').value)||1.5;
+  const paOpy    = parseFloat(document.getElementById('pa-opy').value)||1.5;
   const caNewFY  = caY1V * Math.pow(1+caAcqGrV, yrs-1);
   const paNewFY  = paY1V * Math.pow(1+paAcqGrV, yrs-1);
 
-  const dCacReduction   = (ca.cac*0.1*caNewFY) + (pa.cac*0.1*paNewFY);
-  const dPriceIncrease  = (ca.price*0.05*(last.caActive*(parseFloat(document.getElementById('ca-opy').value)||1.5))) +
-                          (pa.price*0.05*(last.paActive*(parseFloat(document.getElementById('pa-opy').value)||1.5)));
-  const dChurnReduction = (ca.gp - ca.retention) * (last.caActive*0.1) * (parseFloat(document.getElementById('ca-opy').value)||1.5) +
-                          (pa.gp - pa.retention) * (last.paActive*0.1) * (parseFloat(document.getElementById('pa-opy').value)||1.5);
-  const dFixedCostCut   = fixedYr * 0.1;
-  const dCogsReduction  = (ca.cogs*0.1 * last.caActive * (parseFloat(document.getElementById('ca-opy').value)||1.5)) +
-                          (pa.cogs*0.1 * last.paActive * (parseFloat(document.getElementById('pa-opy').value)||1.5));
+  const dPrice   = (ca.price*0.05*(last.caActive*caOpy)) + (pa.price*0.05*(last.paActive*paOpy));
+  const dChurn   = (ca.gp-ca.retention)*(last.caActive*0.1)*caOpy + (pa.gp-pa.retention)*(last.paActive*0.1)*paOpy;
+  const dCAC     = (ca.cac*0.1*caNewFY) + (pa.cac*0.1*paNewFY);
+  const dFixed   = fixedYr * 0.1;
+  const dCOGS    = (ca.cogs*0.1*last.caActive*caOpy) + (pa.cogs*0.1*last.paActive*paOpy);
 
   const levers = [
-    { name:`5% price increase (both products)`,  delta:dPriceIncrease,  pct: baseFYRev>0?dPriceIncrease/baseFYRev*100:0 },
-    { name:`10% churn reduction (both products)`,delta:dChurnReduction, pct: baseFYRev>0?dChurnReduction/baseFYRev*100:0 },
-    { name:`10% CAC reduction (both products)`,  delta:dCacReduction,   pct: baseFYRev>0?dCacReduction/baseFYRev*100:0 },
-    { name:`10% fixed cost reduction`,           delta:dFixedCostCut,   pct: baseFYRev>0?dFixedCostCut/baseFYRev*100:0 },
-    { name:`10% COGS reduction (both products)`, delta:dCogsReduction,  pct: baseFYRev>0?dCogsReduction/baseFYRev*100:0 },
+    { name:'5% price increase', detail:'Across both products — highest-leverage lever as it flows directly to margin with no incremental cost.', delta:dPrice },
+    { name:'10% churn reduction', detail:'Retaining more of the existing base compounds over time. Directly extends average customer lifetime and LTV.', delta:dChurn },
+    { name:'10% CAC reduction', detail:'Improves unit economics on every new customer acquired. Most impactful as the active customer base grows.', delta:dCAC },
+    { name:'10% fixed cost reduction', detail:'Meaningful at this scale. As revenue grows, fixed costs become a smaller share of contribution.', delta:dFixed },
+    { name:'10% COGS reduction', detail:'Improves gross margin on every order. Typically achieved through volume-based supplier negotiations.', delta:dCOGS },
   ].sort((a,b) => b.delta - a.delta);
 
-  // ── LTV:CAC quality ─────────────────────────────────────────────────────────
-  const caLTVCAC = parseFloat(ca.ltvCacRatio) || 0;
-  const paLTVCAC = parseFloat(pa.ltvCacRatio) || 0;
-  const ltvCacLabel = (r) => r >= 3 ? {text:'Healthy',cls:'high'} : r >= 1.5 ? {text:'Marginal',cls:'med'} : {text:'Weak',cls:'low'};
-
-  // ── exit value sensitivity ───────────────────────────────────────────────────
   const revMultLo = parseFloat(document.getElementById('rev-mult-lo').value)||0.5;
   const revMultHi = parseFloat(document.getElementById('rev-mult-hi').value)||2.0;
   const eLo       = parseFloat(document.getElementById('ebitda-mult-lo').value)||3;
   const eHi       = parseFloat(document.getElementById('ebitda-mult-hi').value)||6;
   const revMid    = (revMultLo+revMultHi)/2;
   const eMid      = (eLo+eHi)/2;
+  const revFor1M  = revMid > 0 ? 1e6/revMid : null;
+  const revFor5M  = revMid > 0 ? 5e6/revMid : null;
+  const progressPct = Math.min(100, baseFYRev>0&&revFor1M>0 ? (baseFYRev/revFor1M)*100 : 0);
+  const ltvCacLabel = r => r>=3?{t:'Healthy',c:'high'}:r>=1.5?{t:'Marginal',c:'med'}:{t:'Weak',c:'low'};
 
-  // What revenue is needed for a £1M exit at current midpoint multiple?
-  const revFor1M  = revMid > 0 ? 1000000 / revMid : null;
-  const revFor5M  = revMid > 0 ? 5000000 / revMid : null;
-  const ebitdaFor1M = eMid > 0 ? 1000000 / eMid : null;
+  // ── conditional narrative building blocks ────────────────────────────────────
+  const gmQuality = gm => gm >= 80 ? 'exceptional' : gm >= 65 ? 'strong' : gm >= 50 ? 'moderate' : 'thin';
+  const caGmQ = gmQuality(ca.gm), paGmQ = gmQuality(pa.gm);
 
-  const progressPct = Math.min(100, baseFYRev > 0 && revFor1M > 0 ? (baseFYRev/revFor1M)*100 : 0);
+  // Business health summary narrative
+  const healthSummary = (() => {
+    const parts = [];
+    if (breakevenYear) {
+      parts.push(`The business reaches EBITDA breakeven in <strong>Year ${breakevenYear.y}</strong> and generates a ${ebitdaMarginLast.toFixed(0)}% EBITDA margin by Year ${yrs}.`);
+    } else {
+      const gap = fixedYr > 0 ? fmtK(fixedYr - baseFYContrib) : null;
+      parts.push(`At current assumptions, the business does not reach EBITDA breakeven within the modelled period. By Year ${yrs}, contribution covers ${baseFYContrib>0?(baseFYContrib/fixedYr*100).toFixed(0)+'%':'none'} of annual fixed costs${gap?' — a gap of '+gap:''}.`);
+    }
+    const ltvCacComment = caLTVCAC>=3&&paLTVCAC>=3
+      ? 'Unit economics are healthy across both products, with LTV:CAC ratios above the 3:1 benchmark.'
+      : caLTVCAC<1.5||paLTVCAC<1.5
+      ? `LTV:CAC ratios are below the 3:1 benchmark on ${caLTVCAC<paLTVCAC?'Carb Accelerator':'Protein Accelerator'} — each acquired customer is generating insufficient lifetime return relative to acquisition cost.`
+      : 'LTV:CAC ratios are marginal and should be monitored as the customer base scales.';
+    parts.push(ltvCacComment);
+    parts.push(`Gross margins are <strong>${caGmQ}</strong> on Carb Accelerator (${pct(ca.gm)}) and <strong>${paGmQ}</strong> on Protein Accelerator (${pct(pa.gm)}), providing${ca.gm>=60&&pa.gm>=60?' substantial':' limited'} headroom to absorb acquisition costs.`);
+    return parts.join(' ');
+  })();
+
+  // Top profitability action
+  const topLever = levers[0];
+  const profNarrative = (() => {
+    const lines = [];
+    if (!breakevenYear) {
+      const fixedCoverageYr1 = first.totalContrib > 0 ? (fixedYr/first.totalContrib*100).toFixed(0) : '—';
+      lines.push(`The primary obstacle to profitability is <strong>scale</strong>. In Year 1, fixed costs represent approximately ${fixedCoverageYr1}% of total contribution — meaning the business is spending more on overhead than it generates in margin. This is normal at early stage, but the path to profitability runs through customer volume first.`);
+    } else {
+      lines.push(`The business crosses into profitability in Year ${breakevenYear.y}. The focus shifts from survival to margin expansion — driving EBITDA margin above 20% is what creates a fundable and acquirable business.`);
+    }
+
+    if (topLever.name.includes('price')) {
+      lines.push(`The highest-leverage profitability action is a <strong>price increase</strong>. At current volumes, a 5% increase on both products adds ${fmtK(topLever.delta)} to annual EBITDA — more than any other single lever. Price increases are often resisted intuitively but the evidence-led positioning of the Accelerator Series, combined with a coach referral channel, creates exactly the conditions where price elasticity is low. A credible scientific basis reduces price sensitivity.`);
+    } else if (topLever.name.includes('churn')) {
+      lines.push(`The highest-leverage profitability action is <strong>reducing churn</strong>. At current scale, a 10% improvement in retention adds ${fmtK(topLever.delta)} to annual EBITDA. Each percentage point of churn reduction also compounds in the LTV calculation, improving unit economics across every new customer acquired thereafter. Churn reduction levers include a stronger onboarding sequence, a protocol-based usage guide that builds habit, and proactive win-back at the 60-day mark.`);
+    } else if (topLever.name.includes('CAC')) {
+      lines.push(`The highest-leverage profitability action is <strong>reducing acquisition cost</strong>. A 10% CAC reduction adds ${fmtK(topLever.delta)} to annual EBITDA. As the coach referral channel develops and organic content builds domain authority, blended CAC should compress naturally. Each percentage point improvement compounds as the acquisition base grows year-on-year.`);
+    }
+
+    lines.push(`Fixed costs of ${fmtK(fixedYr)}/yr represent ${baseFYContrib>0?(fixedYr/baseFYContrib*100).toFixed(0)+'%':' the majority'} of Year ${yrs} contribution. ${fixedYr/baseFYRev*100<20?'At sub-20% of revenue, the fixed cost base is lean and the business has natural operating leverage as revenue scales.':'Keeping fixed cost growth below revenue growth is critical — every pound added to the fixed base raises the breakeven customer count.'}`);
+
+    return lines.join(' ');
+  })();
+
+  // Exit value narrative
+  const exitNarrative = (() => {
+    const lines = [];
+    if (!breakevenYear) {
+      lines.push(`Pre-profitability, a buyer's primary valuation input is <strong>revenue growth rate and trajectory</strong>. A strategic acquirer — a larger supplement brand, a sports nutrition group, or a direct-to-consumer platform — will apply a revenue multiple to the most recent annualised run rate, with a premium for demonstrable month-on-month growth and a defensible ICP.`);
+      lines.push(`At Year ${yrs} revenue of ${fmtK(baseFYRev)}, the business trades in the <strong>${fmtK(baseFYRev*revMultLo)}–${fmtK(baseFYRev*revMultHi)} range</strong> on a revenue multiple basis. To command the upper end of that range, the business needs a clean customer acquisition story (CAC trending down), evidence of repeat purchase behaviour (LTV:CAC above 3:1), and a proprietary audience (email list, coach network) that doesn't leave with the founders.`);
+    } else {
+      lines.push(`Once the business is EBITDA positive, the valuation methodology shifts. Strategic buyers and financial acquirers will anchor on <strong>EBITDA multiples</strong>, which reflect the underlying cash generation of the business. At Year ${yrs} EBITDA of ${fmtK(baseFYEbitda)}, the EBITDA multiple range produces a valuation of ${fmtK(baseFYEbitda*eLo)}–${fmtK(baseFYEbitda*eHi)}.`);
+      lines.push(`The factors that command a premium multiple in this category are: gross margin above 65% (a strong signal that the brand has pricing power), LTV:CAC above 3:1 (a signal of sustainable acquisition economics), churn below 40% (a signal of genuine product-market fit), and a diversified channel mix that doesn't collapse if a single platform changes its algorithm or cost structure.`);
+    }
+
+    lines.push(`Two things that are often underweighted in early-stage DTC valuations: <strong>the email list and coach network</strong>. A validated list of 10,000+ engaged endurance athletes with documented purchase intent is a hard asset for any acquirer. The EDGE Study data — athlete testimonials, field study results, a documented ICP — functions as proprietary evidence that reduces acquirer risk and supports a premium. Build these as if they will appear in a data room.`);
+
+    const revGap1M = revFor1M ? fmtK(revFor1M - baseFYRev) : null;
+    if (revGap1M && baseFYRev < (revFor1M||0)) {
+      lines.push(`To reach a £1M exit on a revenue basis requires ${fmtK(revFor1M||0)} in annual revenue — the current model produces ${fmtK(baseFYRev)} by Year ${yrs}, a gap of ${revGap1M}. Closing that gap is a function of Year 1 customer count, acquisition growth rate, and churn — all adjustable in the product tabs.`);
+    } else if (baseFYRev >= (revFor1M||0)) {
+      lines.push(`The current model already supports a £1M+ exit on a revenue basis by Year ${yrs}. The £5M exit requires ${fmtK(revFor5M||0)} in annual revenue — a meaningful step up that would require either a step-change in acquisition rate or expansion into new channels or markets.`);
+    }
+
+    return lines.join(' ');
+  })();
+
   document.getElementById('drivers-content').innerHTML = `
-    <div class="driver-grid">
 
-      <div class="driver-card">
-        <div class="driver-card-title">Path to profitability</div>
-        <div class="driver-row">
-          <span class="driver-name">Breakeven year</span>
-          <span class="driver-val ${breakevenYear?'pos':'neg'}">${breakevenYear?'Year '+breakevenYear.y:'Not in period'}</span>
+    <div class="narr-section">
+      <div class="narr-heading">Business health assessment</div>
+      <p class="narrative">${healthSummary}</p>
+      <div class="narr-grid">
+        <div class="driver-card">
+          <div class="driver-card-title">Unit economics</div>
+          <div class="driver-row"><span class="driver-name">CA gross margin</span><span class="driver-val pos">${pct(ca.gm)}</span></div>
+          <div class="driver-row"><span class="driver-name">PA gross margin</span><span class="driver-val pos">${pct(pa.gm)}</span></div>
+          <div class="driver-row"><span class="driver-name">CA LTV:CAC</span><span class="driver-val">${ca.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(caLTVCAC).c}">${ltvCacLabel(caLTVCAC).t}</span></span></div>
+          <div class="driver-row"><span class="driver-name">PA LTV:CAC</span><span class="driver-val">${pa.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(paLTVCAC).c}">${ltvCacLabel(paLTVCAC).t}</span></span></div>
+          <div class="driver-row"><span class="driver-name">CA break-even ROAS</span><span class="driver-val">${ca.roasBreak}×</span></div>
+          <div class="driver-row"><span class="driver-name">PA break-even ROAS</span><span class="driver-val">${pa.roasBreak}×</span></div>
         </div>
-        <div class="driver-row">
-          <span class="driver-name">Approx. breakeven customers</span>
-          <span class="driver-val">${fmtN(breakevenCustomers)}</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">Customers at end of period</span>
-          <span class="driver-val ${totalCustomersLast>=breakevenCustomers?'pos':'warn'}">${fmtN(totalCustomersLast)}</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">Final year EBITDA margin</span>
-          <span class="driver-val ${ebitdaMarginLast>=0?'pos':'neg'}">${ebitdaMarginLast.toFixed(1)}%</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">Final year contribution margin</span>
-          <span class="driver-val">${contribMarginLast.toFixed(1)}%</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">Fixed costs as % of final contribution</span>
-          <span class="driver-val ${last.totalContrib>fixedYr?'pos':'neg'}">${last.totalContrib>0?(fixedYr/last.totalContrib*100).toFixed(0)+'%':'—'}</span>
-        </div>
-      </div>
-
-      <div class="driver-card">
-        <div class="driver-card-title">Unit economics quality</div>
-        <div class="driver-row">
-          <span class="driver-name">CA gross margin</span>
-          <span class="driver-val pos">${pct(ca.gm)}</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">PA gross margin</span>
-          <span class="driver-val pos">${pct(pa.gm)}</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">CA LTV:CAC ratio</span>
-          <span class="driver-val">${ca.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(caLTVCAC).cls}">${ltvCacLabel(caLTVCAC).text}</span></span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">PA LTV:CAC ratio</span>
-          <span class="driver-val">${pa.ltvCacRatio}:1 <span class="driver-badge ${ltvCacLabel(paLTVCAC).cls}">${ltvCacLabel(paLTVCAC).text}</span></span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">CA break-even ROAS</span>
-          <span class="driver-val">${ca.roasBreak}×</span>
-        </div>
-        <div class="driver-row">
-          <span class="driver-name">PA break-even ROAS</span>
-          <span class="driver-val">${pa.roasBreak}×</span>
+        <div class="driver-card">
+          <div class="driver-card-title">Path to profitability</div>
+          <div class="driver-row"><span class="driver-name">Breakeven year</span><span class="driver-val ${breakevenYear?'pos':'neg'}">${breakevenYear?'Year '+breakevenYear.y:'Not in period'}</span></div>
+          <div class="driver-row"><span class="driver-name">Breakeven customer count</span><span class="driver-val">${breakevenCustomers>0?fmtN(breakevenCustomers):'—'}</span></div>
+          <div class="driver-row"><span class="driver-name">Customers at end of period</span><span class="driver-val ${totalCustomersLast>=(breakevenCustomers||0)?'pos':'warn'}">${fmtN(totalCustomersLast)}</span></div>
+          <div class="driver-row"><span class="driver-name">Year ${yrs} contribution margin</span><span class="driver-val">${contribMarginLast.toFixed(1)}%</span></div>
+          <div class="driver-row"><span class="driver-name">Year ${yrs} EBITDA margin</span><span class="driver-val ${ebitdaMarginLast>=0?'pos':'neg'}">${ebitdaMarginLast.toFixed(1)}%</span></div>
+          <div class="driver-row"><span class="driver-name">Fixed costs vs. Year ${yrs} contribution</span><span class="driver-val ${baseFYContrib>fixedYr?'pos':'neg'}">${baseFYContrib>0?(fixedYr/baseFYContrib*100).toFixed(0)+'%':'—'}</span></div>
         </div>
       </div>
     </div>
 
-    <div class="driver-card" style="margin-bottom:12px">
-      <div class="driver-card-title">EBITDA sensitivity — impact of a 10% improvement in each lever (final year)</div>
-      <table class="sensitivity-table">
-        <thead><tr>
-          <th style="text-align:left">Lever</th>
-          <th>EBITDA uplift</th>
-          <th>As % of revenue</th>
-          <th>New EBITDA</th>
-          <th>Impact</th>
-        </tr></thead>
-        <tbody>
-          ${levers.map((l,i) => `<tr>
-            <td>${l.name}</td>
-            <td style="color:#416BA9">+${fmtK(l.delta)}</td>
-            <td>+${l.pct.toFixed(1)}%</td>
-            <td style="${(baseFYEbitda+l.delta)>=0?'color:#416BA9':'color:#BBBBBB'}">${fmtK(baseFYEbitda+l.delta)}</td>
-            <td><span class="driver-badge ${i===0?'high':i<=1?'med':'low'}">${i===0?'Highest':i<=1?'High':'Moderate'}</span></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
+    <div class="narr-section">
+      <div class="narr-heading ${!breakevenYear?'amber':''}">Driving profitability — what to focus on</div>
+      <p class="narrative">${profNarrative}</p>
+      <div class="driver-card" style="margin-top:10px">
+        <div class="driver-card-title">EBITDA sensitivity — impact of a 10% improvement in each lever (Year ${yrs})</div>
+        <div style="margin-top:8px">
+          ${levers.map((l,i) => `
+          <div class="focus-item">
+            <div class="focus-num">${i+1}</div>
+            <div class="focus-body">
+              <div class="focus-title">${l.name}</div>
+              <div class="focus-desc">${l.detail}</div>
+              <div class="focus-impact">+${fmtK(l.delta)} EBITDA &nbsp;→&nbsp; new EBITDA: <span style="${(baseFYEbitda+l.delta)>=0?'color:#416BA9':'color:#BBBBBB'}">${fmtK(baseFYEbitda+l.delta)}</span></div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
     </div>
 
-    <div class="driver-card">
-      <div class="driver-card-title">Exit value — what drives it</div>
-      <div class="driver-row">
-        <span class="driver-name">Primary driver pre-profitability</span>
-        <span class="driver-val">Revenue growth</span>
-      </div>
-      <div class="driver-row">
-        <span class="driver-name">Primary driver post-profitability</span>
-        <span class="driver-val">EBITDA margin</span>
-      </div>
-      <div class="driver-row">
-        <span class="driver-name">Final year revenue</span>
-        <span class="driver-val pos">${fmtK(baseFYRev)}</span>
-      </div>
-      <div class="driver-row">
-        <span class="driver-name">Revenue needed for £1M exit (${revMid.toFixed(1)}× mid)</span>
-        <span class="driver-val">${revFor1M?fmtK(revFor1M):'—'}</span>
-      </div>
-      <div class="driver-row">
-        <span class="driver-name">Revenue needed for £5M exit (${revMid.toFixed(1)}× mid)</span>
-        <span class="driver-val">${revFor5M?fmtK(revFor5M):'—'}</span>
-      </div>
-      <div class="driver-row">
-        <span class="driver-name">EBITDA needed for £1M exit (${eMid.toFixed(1)}× mid)</span>
-        <span class="driver-val">${ebitdaFor1M?fmtK(ebitdaFor1M):'—'}</span>
-      </div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;font-weight:700;margin-bottom:4px">
-          <span>Progress to £1M exit (revenue basis)</span>
-          <span>${progressPct.toFixed(0)}%</span>
+    <div class="narr-section">
+      <div class="narr-heading dark">Exit value — what a buyer is looking for</div>
+      <p class="narrative">${exitNarrative}</p>
+      <div class="driver-card">
+        <div class="driver-card-title">Exit value at Year ${yrs}</div>
+        <div class="driver-row"><span class="driver-name">Year ${yrs} annual revenue</span><span class="driver-val pos">${fmtK(baseFYRev)}</span></div>
+        <div class="driver-row"><span class="driver-name">Revenue multiple range (${revMultLo}–${revMultHi}×)</span><span class="driver-val">${fmtK(baseFYRev*revMultLo)} – ${fmtK(baseFYRev*revMultHi)}</span></div>
+        <div class="driver-row"><span class="driver-name">Year ${yrs} EBITDA</span><span class="driver-val ${baseFYEbitda>=0?'pos':'neg'}">${fmtK(baseFYEbitda)}</span></div>
+        <div class="driver-row"><span class="driver-name">EBITDA multiple range (${eLo}–${eHi}×)</span><span class="driver-val ${baseFYEbitda>0?'':'neg'}">${baseFYEbitda>0?fmtK(baseFYEbitda*eLo)+' – '+fmtK(baseFYEbitda*eHi):'Requires profitability'}</span></div>
+        <div class="driver-row"><span class="driver-name">Revenue needed for £1M exit (${revMid.toFixed(1)}× mid)</span><span class="driver-val">${revFor1M?fmtK(revFor1M):'—'}</span></div>
+        <div class="driver-row"><span class="driver-name">Revenue needed for £5M exit (${revMid.toFixed(1)}× mid)</span><span class="driver-val">${revFor5M?fmtK(revFor5M):'—'}</span></div>
+        <div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;font-weight:700;margin-bottom:5px">
+            <span>Progress to £1M exit — revenue basis</span>
+            <span>${progressPct.toFixed(0)}%</span>
+          </div>
+          <div class="breakeven-bar"><div class="breakeven-fill" style="width:${progressPct}%"></div></div>
         </div>
-        <div class="breakeven-bar"><div class="breakeven-fill" style="width:${progressPct}%"></div></div>
       </div>
-      <div class="exit-scenario" style="grid-template-columns:1fr 1fr">
-        <div class="exit-cell featured">
-          <div class="exit-cell-label">Revenue (${revMultLo}–${revMultHi}×)</div>
-          <div class="exit-cell-val">${fmtK(baseFYRev*revMultLo)} – ${fmtK(baseFYRev*revMultHi)}</div>
-          <div class="exit-cell-sub">Revenue multiple range</div>
-        </div>
-        <div class="exit-cell ${last.ebitda>0?'':'muted'}">
-          <div class="exit-cell-label">EBITDA (${eLo}–${eHi}×)</div>
-          <div class="exit-cell-val">${last.ebitda>0?fmtK(last.ebitda*eLo)+' – '+fmtK(last.ebitda*eHi):'Loss-making'}</div>
-          <div class="exit-cell-sub">${last.ebitda>0?'EBITDA multiple range':'Requires profitability'}</div>
-        </div>
+      <div class="callout" style="margin-top:12px">
+        <strong>What to build alongside the revenue model.</strong> Acquirers in the supplement space pay a premium for three things beyond the numbers: a verified, owned audience (email list + coach network); proprietary evidence of efficacy (field study data, athlete testimonials, named advocates); and a brand that the founder is not the sole custodian of. Systematically building these assets from day one means they are present and documentable when a buyer runs due diligence.
       </div>
     </div>`;
 }
+
 
 // ── url param sync ────────────────────────────────────────────────────────────
 // Maps short URL param keys → input element IDs
