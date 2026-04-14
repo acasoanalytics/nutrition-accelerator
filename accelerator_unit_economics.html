@@ -452,8 +452,11 @@ function getUE(pid) {
   const cac = v('cac'), retention = v('ret');
   // Derive LTV multiplier from churn rate and repeat orders/yr
   const churnEl = document.getElementById(`${pid}-churn`);
-  const churnRate = (churnEl && churnEl.value !== '' ? parseFloat(churnEl.value) : 50) / 100;
-  const opy = parseFloat(document.getElementById(`${pid}-opy`).value) || 1.5;
+  const churnRaw = churnEl ? parseFloat(churnEl.value) : NaN;
+  const churnRate = (isNaN(churnRaw) ? 50 : churnRaw) / 100;
+  const opyEl = document.getElementById(`${pid}-opy`);
+  const opyRaw = opyEl ? parseFloat(opyEl.value) : NaN;
+  const opy = isNaN(opyRaw) ? 1.5 : opyRaw;
   const avgYrsRetained = churnRate > 0 ? 1 / churnRate : 0;
   const ltvMult = 1 + (opy * avgYrsRetained);
   const procFee = price * proc;
@@ -513,7 +516,7 @@ function growthRows(ue, y1, acqGr, churnR, opy, yrs) {
 function calcProduct(pid) {
   const v   = getUE(pid);
   const cfg = PRODUCTS[pid];
-  const n   = id => parseFloat(document.getElementById(`${pid}-${id}`).value) || 0;
+  const n   = id => { const el = document.getElementById(`${pid}-${id}`); if (!el) return 0; const v = parseFloat(el.value); return isNaN(v) ? 0 : v; };
   const cmNeg = v.cm < 0;
 
   // metrics
@@ -788,7 +791,7 @@ function calcBiz() {
     </div>`;
 
   // fixed costs
-  const n = id => parseFloat(document.getElementById(id).value) || 0;
+  const n = id => { const el = document.getElementById(id); if (!el) return 0; const v = parseFloat(el.value); return isNaN(v) ? 0 : v; };
   const fixedMo = n('cost-people') + n('cost-tech') + n('cost-ops') + n('cost-other');
   const fixedYr = fixedMo * 12;
   document.getElementById('total-fixed-mo').textContent = fmtK(fixedMo);
@@ -800,16 +803,17 @@ function calcBiz() {
   const caSom = buildFunnel('biz-ca-funnel', caTam, caSam, caSomPct, PRODUCTS.ca.tamLabel, PRODUCTS.ca.samLabel);
   const paSom = buildFunnel('biz-pa-funnel', paTam, paSam, paSomPct, PRODUCTS.pa.tamLabel, PRODUCTS.pa.samLabel);
 
-  // pull growth params entirely from product tabs
-  const caOpy   = parseFloat(document.getElementById('ca-opy').value) || 1;
-  const paOpy   = parseFloat(document.getElementById('pa-opy').value) || 1;
-  const caYrs   = parseInt(document.getElementById('ca-years').value) || 5;
-  const paYrs   = parseInt(document.getElementById('pa-years').value) || 5;
+  // pull growth params entirely from product tabs — use rangeVal() to safely read range inputs
+  const rangeVal = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
+  const caOpy   = rangeVal('ca-opy', 1.5);
+  const paOpy   = rangeVal('pa-opy', 1.5);
+  const caYrs   = Math.round(rangeVal('ca-years', 5));
+  const paYrs   = Math.round(rangeVal('pa-years', 5));
   const yrs     = Math.max(caYrs, paYrs);
-  const caAcqGr = (n('ca-acqgr')) / 100;
-  const caChurn = (n('ca-churn')) / 100;
-  const paAcqGr = (n('pa-acqgr')) / 100;
-  const paChurn = (n('pa-churn')) / 100;
+  const caAcqGr = rangeVal('ca-acqgr', 50) / 100;
+  const caChurn = rangeVal('ca-churn', 50) / 100;
+  const paAcqGr = rangeVal('pa-acqgr', 60) / 100;
+  const paChurn = rangeVal('pa-churn', 55) / 100;
   const caY1    = n('ca-y1');
   const paY1    = n('pa-y1');
 
@@ -1133,7 +1137,13 @@ function serializeState() {
   if (name) p.set('name', name);
   Object.entries(PARAM_MAP).forEach(([key, id]) => {
     const el = document.getElementById(id);
-    if (el) p.set(key, el.value);
+    if (!el) return;
+    const val = el.value;
+    // Skip empty or NaN values — don't corrupt the URL
+    if (val === '' || val === null || val === undefined) return;
+    const num = parseFloat(val);
+    if (isNaN(num) && el.type !== 'text') return;
+    p.set(key, val);
   });
   // Channel tab active index per product
   ['ca','pa'].forEach(pid => {
@@ -1247,11 +1257,10 @@ function loadFromUrl() {
     document.getElementById('loaded-banner').style.display = 'flex';
     document.getElementById('loaded-name').textContent = 'unnamed';
   }
-  // Suppress URL debounce during restore so it doesn't overwrite with stale values
+  // Suppress URL debounce during restore
   clearTimeout(urlDebounce);
   applyParams(p);
-  // Update URL once cleanly after restore is complete
-  setTimeout(updateUrl, 0);
+  // Do not rewrite the URL — it already contains the correct params
 }
 
 // Update URL on every input change (debounced)
