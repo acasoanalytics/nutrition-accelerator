@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accelerator Series — Unit Economics Calculator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#f5f5f5;min-height:100%}
+body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#fff;color:#222;max-width:820px;margin:0 auto;padding:2rem 2.5rem 4rem;min-height:100vh}
+@media(max-width:860px){body{padding:1.5rem 1.5rem 3rem}}
+@media(max-width:600px){body{padding:1rem 1rem 2rem}}
+.page-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #e8e8e8}
+.page-title{font-size:16px;font-weight:700;letter-spacing:.02em;color:#222}
+.page-sub{font-size:11px;color:#aaa;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.main-tabs{display:flex;gap:0;border-bottom:1px solid #e8e8e8;margin-bottom:1.75rem}
+.main-tab{padding:10px 20px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:#aaa;font-family:inherit;margin-bottom:-1px;transition:color .15s}
+.main-tab:hover{color:#222}
+.main-tab.active{color:#416BA9;border-bottom-color:#416BA9}
+.panel{display:none}.panel.active{display:block}
+.section{margin-bottom:1.5rem}
+.section-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:10px}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.divider{height:1px;background:#f0f0f0;margin:1.5rem 0}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:700;letter-spacing:.02em;color:#888;display:flex;align-items:center;gap:5px}
+.field input[type=number]{height:38px;border:1px solid #e0e0e0;border-radius:3px;background:#fff;color:#222;padding:0 10px;font-size:14px;font-weight:700;font-family:inherit;width:100%;transition:border .15s}
+.field input[type=number]:focus{outline:none;border-color:#416BA9}
+.hint{font-size:10px;color:#bbb;margin-top:1px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 12px;border-radius:2px;border:1px solid #e0e0e0;font-size:11px;font-weight:700;letter-spacing:.02em;cursor:pointer;background:#fff;color:#aaa;transition:all .15s;font-family:inherit}
+.tab:hover{border-color:#aaa;color:#222}
+.tab.active{background:#416BA9;color:#fff;border-color:#416BA9}
+.surface{background:#f8f8f8;border:1px solid #f0f0f0;border-radius:3px;padding:14px}
+.surface.mt{margin-top:8px}
+.output-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:#fff;border:1px solid #e8e8e8;border-radius:3px;padding:14px 12px}
+.metric.primary{border-top:2px solid #416BA9}
+.m-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#aaa;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.m-value{font-size:22px;font-weight:700;color:#222;line-height:1}
+.metric.primary .m-value{color:#416BA9}
+.m-sub{font-size:10px;color:#bbb;margin-top:6px}
+.m-flag{font-size:10px;font-weight:700;margin-left:6px;color:#aaa}
+.m-flag.pos{color:#416BA9}.m-flag.neg{color:#BBBBBB}
+.slider-row{display:flex;align-items:center;gap:10px;margin-top:2px}
+.slider-row input[type=range]{flex:1;min-width:0}
+.slider-val{font-size:13px;font-weight:700;color:#416BA9;min-width:38px;text-align:right}
+.ltv-formula{font-size:11px;color:#999;margin-top:10px;padding:10px 12px;border-left:2px solid #416BA9;background:#f8f8f8;line-height:1.7}
+.ltv-formula strong{color:#222}
+.bm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.bm-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#aaa}
+.bm-name{min-width:95px;color:#888}
+.bm-bar{flex:1;height:2px;background:#f0f0f0;border-radius:1px;position:relative}
+.bm-fill{position:absolute;top:0;left:0;height:100%;background:#416BA9;border-radius:1px}
+.bm-range{white-space:nowrap;font-weight:700;color:#888}
+.chart-wrap{position:relative;height:260px;margin-top:4px}
+.chart-wrap-lg{position:relative;height:300px;margin-top:4px}
+.info-btn{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid #ddd;background:#f8f8f8;color:#bbb;font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;font-family:inherit;padding:0;transition:all .15s}
+.info-btn:hover{border-color:#416BA9;color:#416BA9}
+.tooltip-wrap{position:relative;display:inline-flex}
+.tooltip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#222;border-radius:3px;padding:8px 10px;font-size:11px;color:#fff;line-height:1.5;width:210px;z-index:100}
+.tooltip-box.right{left:auto;right:0;transform:none}
+.tooltip-box.visible{display:block}
+.tooltip-box strong{font-weight:700;display:block;margin-bottom:3px}
+.funnel{display:flex;flex-direction:column;gap:3px;margin:12px 0}
+.funnel-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px}
+.funnel-bar-wrap{height:30px;background:#f0f0f0;border-radius:2px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:2px;transition:width .35s}
+.funnel-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#aaa;text-align:right}
+.funnel-info{display:flex;flex-direction:column;align-items:flex-end;min-width:130px}
+.funnel-count{font-size:12px;font-weight:700;color:#222}
+.funnel-desc{font-size:10px;color:#bbb}
+.funnel-arrow{font-size:10px;color:#bbb;padding:1px 0 1px 44px}
+.mkt-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+.icp-box{background:#f8f8f8;border:1px solid #f0f0f0;border-left:2px solid #416BA9;border-radius:3px;padding:10px 14px;margin-bottom:1.25rem}
+.icp-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-bottom:6px}
+.icp-text{font-size:11px;color:#666;line-height:1.6}
+.g-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+.g-table th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#aaa;text-align:right;padding:7px 8px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+.g-table th:first-child{text-align:left}
+.g-table td{padding:8px;text-align:right;border-bottom:1px solid #f8f8f8;color:#222}
+.g-table td:first-child{text-align:left;color:#888;font-weight:700}
+.g-table tr:last-child td{border-bottom:none;font-weight:700;color:#416BA9}
+.ref-box{background:#f8f8f8;border:1px solid #f0f0f0;border-radius:3px;padding:10px 14px;margin-bottom:1.5rem;display:flex;gap:20px;flex-wrap:wrap}
+.ref-item{font-size:10px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ref-item span{display:block;font-size:14px;font-weight:700;color:#222;margin-top:2px;text-transform:none;letter-spacing:0}
+.ref-item span.blue{color:#416BA9}
+@media(max-width:680px){
+  .row-3{grid-template-columns:1fr 1fr}.row-2{grid-template-columns:1fr}
+  .output-grid,.mkt-grid{grid-template-columns:1fr 1fr}.bm-grid{grid-template-columns:1fr}
+  .chart-wrap{height:220px}.chart-wrap-lg{height:240px}.m-value{font-size:18px}
+  .funnel-info{min-width:90px}.g-table{font-size:10px}.ref-box{gap:12px}
+  .page-header{flex-direction:column;gap:4px}
+}
+@media(max-width:420px){
+  .row-3{grid-template-columns:1fr}.tab{font-size:10px;padding:5px 8px}
+  .output-grid,.mkt-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Accelerator Series — Unit Economics</div>
+  <div class="page-sub">Internal planning tool</div>
+</div>
+
+<div class="main-tabs">
+  <button class="main-tab active" data-panel="ue">Unit economics</button>
+  <button class="main-tab" data-panel="mkt">Market &amp; growth</button>
+</div>
+
+<div class="panel active" id="panel-ue">
+  <div class="section">
+    <div class="section-title">Product</div>
+    <div class="tabs" id="productTabs">
+      <button class="tab active" data-price="49" data-cogs="3.5" data-tam="2500000" data-sam="375000" data-sompct="0.5" data-tam-label="All UK endurance athletes" data-sam-label="High-carb fuelers (60g+/hr)" data-icp="Experienced endurance athletes (cycling, triathlon, marathon, ultra) fueling at 90–120g/hr. Coached, data-driven, sceptical of vague claims. Primary friction: GI distress at high carb loads.">Carb Accelerator — £49</button>
+      <button class="tab" data-price="29.99" data-cogs="3.5" data-tam="4000000" data-sam="1200000" data-sompct="0.3" data-tam-label="UK strength &amp; functional fitness athletes" data-sam-label="Active protein users (2+ servings/wk)" data-icp="Strength and functional fitness athletes (gym, CrossFit, HYROX) supplementing protein regularly. Goal-oriented, open to optimisation. Primary friction: inconsistent protein digestion and bloating.">Protein Accelerator — £29.99</button>
+      <button class="tab" data-price="0" data-cogs="0" data-tam="2500000" data-sam="375000" data-sompct="0.5" data-tam-label="Total addressable market" data-sam-label="Serviceable addressable market" data-icp="">Custom</button>
+    </div>
+  </div>
+  <div class="row-3 section">
+    <div class="field"><label>Selling price (£)</label><input type="number" id="price" value="49" step="0.01" min="0"></div>
+    <div class="field">
+      <label>COGS per unit (£) <span class="tooltip-wrap"><button class="info-btn" data-tip="cogs">?</button><div class="tooltip-box" id="tip-cogs"><strong>Cost of Goods Sold</strong>Direct manufacturing cost — ingredients, capsules, packaging, overheads. Excludes marketing and shipping.</div></span></label>
+      <input type="number" id="cogs" value="3.50" step="0.01" min="0"><div class="hint">Typical: 15–30% of RRP</div>
+    </div>
+    <div class="field"><label>Shipping cost (£)</label><input type="number" id="shipping" value="2.99" step="0.01" min="0"><div class="hint">Free over £50</div></div>
+  </div>
+  <div class="row-2 section">
+    <div class="field">
+      <label>Payment processing (%) <span class="tooltip-wrap"><button class="info-btn" data-tip="proc">?</button><div class="tooltip-box" id="tip-proc"><strong>Payment processing fee</strong>Shopify Payments / Stripe per transaction. Typically 1.5–2.5%.</div></span></label>
+      <input type="number" id="processing" value="2.0" step="0.1" min="0" max="10"><div class="hint">Typical: 1.5–2.5%</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Acquisition channel</div>
+    <div class="tabs" id="channelTabs">
+      <button class="tab active" data-cac="30" data-low="20" data-high="45">Meta ads</button>
+      <button class="tab" data-cac="35" data-low="25" data-high="55">Google ads</button>
+      <button class="tab" data-cac="10" data-low="5" data-high="18">Organic / SEO</button>
+      <button class="tab" data-cac="18" data-low="10" data-high="28">Influencer / affiliate</button>
+      <button class="tab" data-cac="3" data-low="1" data-high="6">Email / CRM</button>
+      <button class="tab" data-cac="12" data-low="6" data-high="20">Coach referral</button>
+      <button class="tab" data-cac="0" data-low="0" data-high="0">Custom</button>
+    </div>
+    <div class="surface mt">
+      <div class="row-2" style="gap:12px">
+        <div class="field">
+          <label>CAC — first order only (£) <span class="tooltip-wrap"><button class="info-btn" data-tip="cac">?</button><div class="tooltip-box" id="tip-cac"><strong>Customer Acquisition Cost</strong>Total spend to acquire one new customer. Incurred once — repeat orders run at retention cost only.</div></span></label>
+          <input type="number" id="cac" value="30" step="0.5" min="0">
+        </div>
+        <div class="field" style="justify-content:flex-end"><div class="hint" id="cacBenchmark" style="margin-top:8px">UK DTC benchmark: £20–£45</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Lifetime value assumptions</div>
+    <div class="surface">
+      <div class="row-2" style="gap:12px">
+        <div class="field">
+          <label>Total orders incl. first <span class="tooltip-wrap"><button class="info-btn" data-tip="ltvm">?</button><div class="tooltip-box" id="tip-ltvm"><strong>LTV order multiplier</strong>Average total orders per customer. 2.2× = 2.2 orders on average. UK DTC supplement average: 1.8–3.5×.</div></span></label>
+          <div class="slider-row"><input type="range" id="ltv" min="1" max="6" step="0.1" value="2.2"><span class="slider-val" id="ltvVal">2.2×</span></div>
+          <div class="hint">Industry avg 1.8–3.5×</div>
+        </div>
+        <div class="field">
+          <label>Retention cost / repeat order (£) <span class="tooltip-wrap"><button class="info-btn right" data-tip="ret">?</button><div class="tooltip-box right" id="tip-ret"><strong>Retention cost</strong>Email, CRM and win-back per repeat order. CAC not re-incurred. Typically £1–6.</div></span></label>
+          <input type="number" id="retention" value="3" step="0.5" min="0"><div class="hint">Email / CRM only — CAC not re-incurred</div>
+        </div>
+      </div>
+      <div class="ltv-formula" id="ltvFormula"></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="output-grid" id="metrics"></div>
+  <div class="section">
+    <div class="section-title">Per-unit waterfall</div>
+    <div class="chart-wrap"><canvas id="waterfallChart"></canvas></div>
+  </div>
+  <div class="divider"></div>
+  <div class="section">
+    <div class="section-title">Channel benchmarks — UK DTC supplements</div>
+    <div class="bm-grid" id="benchmarks"></div>
+    <div class="hint" style="margin-top:10px;line-height:1.6">Ranges reflect UK DTC supplement brands at comparable AOV (£30–£60). Meta CAC compresses with creative iteration; Google varies by keyword competition.</div>
+  </div>
+</div>
+
+<div class="panel" id="panel-mkt">
+  <div class="ref-box" id="ueRef"></div>
+  <div class="icp-box" id="icpBox" style="display:none">
+    <div class="icp-label">ICP — <span id="icpProduct"></span></div>
+    <div class="icp-text" id="icpText"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Market sizing</div>
+    <div class="surface">
+      <div class="row-3" style="gap:12px;margin-bottom:14px">
+        <div class="field">
+          <label>TAM <span class="tooltip-wrap"><button class="info-btn" data-tip="tam">?</button><div class="tooltip-box" id="tip-tam"><strong>Total Addressable Market</strong>All potential customers for this product category in the UK.</div></span></label>
+          <input type="number" id="tam" value="2500000" step="50000" min="0">
+          <div class="hint" id="tamHint">All UK endurance athletes</div>
+        </div>
+        <div class="field">
+          <label>SAM <span class="tooltip-wrap"><button class="info-btn" data-tip="sam">?</button><div class="tooltip-box" id="tip-sam"><strong>Serviceable Addressable Market</strong>The subset of TAM who match the ICP closely enough to be a realistic target.</div></span></label>
+          <input type="number" id="sam" value="375000" step="5000" min="0">
+          <div class="hint" id="samHint">High-carb fuelers (60g+/hr)</div>
+        </div>
+        <div class="field">
+          <label>SAM penetration (%) <span class="tooltip-wrap"><button class="info-btn" data-tip="som">?</button><div class="tooltip-box" id="tip-som"><strong>Serviceable Obtainable Market</strong>Realistic share of SAM you can capture. Early-stage DTC typically achieves 0.1–2% in years 1–3.</div></span></label>
+          <input type="number" id="somPct" value="0.5" step="0.1" min="0" max="100">
+          <div class="hint">0.1–2% realistic for early-stage DTC</div>
+        </div>
+      </div>
+      <div class="funnel" id="funnel"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Revenue potential at each level</div>
+    <div class="mkt-grid" id="mktMetrics"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="section">
+    <div class="section-title">Growth model</div>
+    <div class="surface">
+      <div class="row-3" style="gap:12px;margin-bottom:14px">
+        <div class="field"><label>Year 1 customers</label><input type="number" id="y1cust" value="200" step="10" min="1"><div class="hint">Start from SOM or your own target</div></div>
+        <div class="field">
+          <label>New customer growth / yr (%) <span class="tooltip-wrap"><button class="info-btn" data-tip="acqgr">?</button><div class="tooltip-box" id="tip-acqgr"><strong>Acquisition growth rate</strong>How much faster you acquire new customers each year. 50% = 200 in Y1, 300 in Y2, 450 in Y3.</div></span></label>
+          <div class="slider-row"><input type="range" id="acqGrowth" min="0" max="200" step="5" value="50"><span class="slider-val" id="acqGrowthVal">50%</span></div>
+        </div>
+        <div class="field">
+          <label>Annual churn (%) <span class="tooltip-wrap"><button class="info-btn right" data-tip="churn">?</button><div class="tooltip-box right" id="tip-churn"><strong>Churn rate</strong>% of active customers who stop buying each year. DTC supplements typically see 40–70% without subscription.</div></span></label>
+          <div class="slider-row"><input type="range" id="churn" min="0" max="90" step="5" value="50"><span class="slider-val" id="churnVal">50%</span></div>
+          <div class="hint">DTC supplement avg: 40–70%</div>
+        </div>
+      </div>
+      <div class="row-2" style="gap:12px">
+        <div class="field">
+          <label>Repeat orders / retained customer / yr</label>
+          <div class="slider-row"><input type="range" id="ordersPerYear" min="0.5" max="4" step="0.5" value="1.5"><span class="slider-val" id="ordersPerYearVal">1.5×</span></div>
+        </div>
+        <div class="field">
+          <label>Years to model</label>
+          <div class="slider-row"><input type="range" id="years" min="3" max="7" step="1" value="5"><span class="slider-val" id="yearsVal">5 yrs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Revenue projection</div>
+    <div class="chart-wrap-lg"><canvas id="growthChart"></canvas></div>
+  </div>
+  <div class="section"><table class="g-table" id="growthTable"></table></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const DV_TEAL='#9FCFCA',DV_PURPLE='#B14FC5',DV_BLUE='#416BA9',DV_GRAY='#BBBBBB';
+const bms=[
+  {name:'Meta ads',low:20,high:45,pct:70},{name:'Google ads',low:25,high:55,pct:85},
+  {name:'Organic / SEO',low:5,high:18,pct:25},{name:'Influencer',low:10,high:28,pct:40},
+  {name:'Email / CRM',low:1,high:6,pct:8},{name:'Coach referral',low:6,high:20,pct:30},
+];
+document.getElementById('benchmarks').innerHTML=bms.map(b=>`<div class="bm-row"><span class="bm-name">${b.name}</span><div class="bm-bar"><div class="bm-fill" style="width:${b.pct}%"></div></div><span class="bm-range">£${b.low}–£${b.high}</span></div>`).join('');
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.info-btn');
+  document.querySelectorAll('.tooltip-box.visible').forEach(t=>{if(!btn||t.id!=='tip-'+btn.dataset.tip)t.classList.remove('visible');});
+  if(btn){const box=document.getElementById('tip-'+btn.dataset.tip);if(box){box.classList.toggle('visible');e.stopPropagation();}}
+});
+document.querySelectorAll('.main-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.main-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.panel).classList.add('active');
+    if(t.dataset.panel==='mkt') calcMkt();
+  });
+});
+let wChart=null,gChart=null;
+function fmt(n){return(n<0?'–':'')+'£'+Math.abs(n).toFixed(2)}
+function fmtK(n){if(n<0)return'–'+fmtK(-n);return n>=1000000?'£'+(n/1000000).toFixed(1)+'M':n>=1000?'£'+(n/1000).toFixed(0)+'k':'£'+Math.round(n)}
+function fmtN(n){return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'k':Math.round(n).toString()}
+function pct(n){return n.toFixed(1)+'%'}
+function tipBtn(key,right){return`<span class="tooltip-wrap"><button class="info-btn${right?' right':''}" data-tip="${key}">?</button><div class="tooltip-box${right?' right':''}" id="tip-${key}">${TIPS[key]}</div></span>`}
+const TIPS={
+  gp:'<strong>Gross profit</strong>Revenue minus COGS, shipping, and payment processing. What remains before marketing spend.',
+  cm:'<strong>Contribution margin</strong>Gross profit minus CAC. True profitability of each first order.',
+  roas:'<strong>Break-even ROAS</strong>Return on Ad Spend. Minimum revenue per £1 of ad spend to cover CAC. Calculated as price ÷ CAC.',
+  ltv:'<strong>Lifetime Value</strong>Total contribution across all orders. CAC on order 1 only; repeat orders at retention cost. Healthy LTV:CAC is 3:1 or above.'
+};
+function getUE(){
+  const price=parseFloat(document.getElementById('price').value)||0;
+  const cogs=parseFloat(document.getElementById('cogs').value)||0;
+  const ship=parseFloat(document.getElementById('shipping').value)||0;
+  const proc=(parseFloat(document.getElementById('processing').value)||0)/100;
+  const cac=parseFloat(document.getElementById('cac').value)||0;
+  const ltvMult=parseFloat(document.getElementById('ltv').value)||1;
+  const retention=parseFloat(document.getElementById('retention').value)||0;
+  const procFee=price*proc;
+  const gp=price-cogs-ship-procFee;
+  const gm=price>0?(gp/price)*100:0;
+  const cm=gp-cac;
+  const cmPct=price>0?(cm/price)*100:0;
+  const roasBreak=price>0&&cac>0?(price/cac).toFixed(2):'—';
+  const repeatOrders=ltvMult-1;
+  const ltv=cm+(gp-retention)*repeatOrders;
+  const ltvCacRatio=cac>0?(ltv/cac).toFixed(1):'—';
+  return{price,cogs,ship,proc,procFee,cac,gp,gm,cm,cmPct,roasBreak,ltv,ltvMult,retention,repeatOrders,ltvCacRatio};
+}
+function gmFlag(gm){
+  if(gm>=60)return'<span class="m-flag pos">Strong</span>';
+  if(gm>=40)return'<span class="m-flag">Moderate</span>';
+  return'<span class="m-flag neg">Thin</span>';
+}
+function calcUE(){
+  const v=getUE();
+  const cmNeg=v.cm<0;
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="m-label">Gross profit / unit ${tipBtn('gp')}</div><div class="m-value">${fmt(v.gp)}</div><div class="m-sub">Gross margin ${pct(v.gm)}${gmFlag(v.gm)}</div></div>
+    <div class="metric primary"><div class="m-label">Contribution margin ${tipBtn('cm')}</div><div class="m-value" style="${cmNeg?'color:#aaa':''}">${fmt(v.cm)}</div><div class="m-sub">Order 1 after CAC: ${pct(v.cmPct)}</div></div>
+    <div class="metric"><div class="m-label">Break-even ROAS ${tipBtn('roas',true)}</div><div class="m-value">${v.roasBreak}x</div><div class="m-sub">Min revenue per £1 ad spend</div></div>
+    <div class="metric primary"><div class="m-label">LTV (${v.ltvMult.toFixed(1)} orders) ${tipBtn('ltv',true)}</div><div class="m-value">${fmt(v.ltv)}</div><div class="m-sub">LTV:CAC ratio ${v.ltvCacRatio}:1</div></div>`;
+  document.getElementById('ltvFormula').innerHTML=
+    `Order 1: ${fmt(v.gp)} gross profit &minus; ${fmt(v.cac)} CAC = <strong>${fmt(v.cm)}</strong>`+
+    `<br>Orders 2+: ${v.repeatOrders.toFixed(1)} &times; (${fmt(v.gp)} &minus; ${fmt(v.retention)} retention) = <strong>${fmt((v.gp-v.retention)*v.repeatOrders)}</strong>`+
+    `<br>Total LTV: <strong>${fmt(v.ltv)}</strong> &nbsp;|&nbsp; LTV:CAC <strong>${v.ltvCacRatio}:1</strong>`;
+  const labels=['Revenue','COGS','Shipping','Processing','Gross profit','CAC','Contribution'];
+  const isTotal=[false,false,false,false,true,false,true];
+  const vals=[v.price,-v.cogs,-v.ship,-v.procFee,v.gp,-v.cac,v.cm];
+  const fd=[];let run=0;
+  vals.forEach((val,i)=>{
+    if(isTotal[i]){fd.push([Math.min(0,val),Math.max(0,val)]);run=val;}
+    else{const s=run,e=run+val;fd.push([Math.min(s,e),Math.max(s,e)]);run=e;}
+  });
+  const bc=vals.map((val,i)=>isTotal[i]?(val>=0?DV_BLUE:DV_GRAY):(val>=0?DV_TEAL:DV_PURPLE));
+  if(wChart){wChart.destroy();wChart=null;}
+  wChart=new Chart(document.getElementById('waterfallChart'),{
+    type:'bar',data:{labels,datasets:[{data:fd,backgroundColor:bc,borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>' '+fmt(vals[ctx.dataIndex]),title:(i)=>labels[i[0].dataIndex]}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#aaa',font:{size:11,family:"'Gotham','Segoe UI',Arial,sans-serif"}},border:{display:false}},
+        y:{grid:{color:'#f0f0f0'},ticks:{color:'#aaa',font:{size:11,family:"'Gotham','Segoe UI',Arial,sans-serif"},callback:v=>'£'+v.toFixed(0)},border:{display:false}}
+      }
+    }
+  });
+}
+function calcMkt(){
+  const v=getUE();
+  const prod=document.querySelector('#productTabs .tab.active');
+  const tam=parseFloat(document.getElementById('tam').value)||0;
+  const sam=parseFloat(document.getElementById('sam').value)||0;
+  const somPct=(parseFloat(document.getElementById('somPct').value)||0)/100;
+  const som=Math.round(sam*somPct);
+  const y1=parseInt(document.getElementById('y1cust').value)||0;
+  const acqGr=(parseFloat(document.getElementById('acqGrowth').value)||0)/100;
+  const churnR=(parseFloat(document.getElementById('churn').value)||0)/100;
+  const opy=parseFloat(document.getElementById('ordersPerYear').value)||1;
+  const yrs=parseInt(document.getElementById('years').value)||5;
+  const tamLabel=prod?prod.dataset.tamLabel:'Total addressable market';
+  const samLabel=prod?prod.dataset.samLabel:'Serviceable addressable market';
+  document.getElementById('ueRef').innerHTML=
+    `<div class="ref-item">Price<span class="blue">${fmt(v.price)}</span></div>`+
+    `<div class="ref-item">Gross profit<span>${fmt(v.gp)}</span></div>`+
+    `<div class="ref-item">Contribution<span>${fmt(v.cm)}</span></div>`+
+    `<div class="ref-item">LTV<span class="blue">${fmt(v.ltv)}</span></div>`+
+    `<div class="ref-item">LTV:CAC<span class="blue">${v.ltvCacRatio}:1</span></div>`;
+  const icpText=prod?prod.dataset.icp:'';
+  const icpBox=document.getElementById('icpBox');
+  if(icpText){
+    document.getElementById('icpProduct').textContent=prod.textContent.trim().split('—')[0].trim();
+    document.getElementById('icpText').textContent=icpText;
+    icpBox.style.display='block';
+  } else {icpBox.style.display='none';}
+  const samFrac=tam>0?sam/tam:0;
+  const somFrac=tam>0?som/tam:0;
+  const fRows=[
+    {lbl:'TAM',color:DV_BLUE,w:100,count:fmtN(tam),desc:tamLabel},
+    {lbl:'SAM',color:DV_TEAL,w:Math.max(4,Math.min(100,samFrac*100)),count:fmtN(sam),desc:samLabel,arrow:`▼ ${(samFrac*100).toFixed(0)}% match ICP`},
+    {lbl:'SOM',color:DV_PURPLE,w:Math.max(1,Math.min(100,somFrac*100)),count:fmtN(som),desc:'Obtainable at this penetration',arrow:`▼ ${(somPct*100).toFixed(1)}% penetration`},
+  ];
+  document.getElementById('funnel').innerHTML=fRows.map((r,i)=>`
+    ${i>0?`<div class="funnel-arrow">${r.arrow}</div>`:''}
+    <div class="funnel-row">
+      <div class="funnel-lbl">${r.lbl}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-fill" style="width:${r.w}%;background:${r.color}"></div></div>
+      <div class="funnel-info"><span class="funnel-count">${r.count}</span><span class="funnel-desc">${r.desc}</span></div>
+    </div>`).join('');
+  document.getElementById('mktMetrics').innerHTML=`
+    <div class="metric"><div class="m-label">TAM potential</div><div class="m-value" style="font-size:18px">${fmtK(tam*v.ltv)}</div><div class="m-sub">${fmtN(tam)} × ${fmt(v.ltv)} LTV</div></div>
+    <div class="metric"><div class="m-label">SAM potential</div><div class="m-value" style="font-size:18px">${fmtK(sam*v.ltv)}</div><div class="m-sub">${fmtN(sam)} × ${fmt(v.ltv)} LTV</div></div>
+    <div class="metric primary"><div class="m-label">SOM potential</div><div class="m-value" style="font-size:18px">${fmtK(som*v.ltv)}</div><div class="m-sub">${fmtN(som)} × ${fmt(v.ltv)} LTV</div></div>
+    <div class="metric primary"><div class="m-label">SOM annual run-rate</div><div class="m-value" style="font-size:18px">${fmtK(som*v.price*opy)}</div><div class="m-sub">${fmtN(som)} × ${fmt(v.price)} × ${opy}×/yr</div></div>`;
+  const rows=[];let newCust=y1,activePrev=0,cumRev=0,cumContrib=0;
+  for(let y=1;y<=yrs;y++){
+    const retained=activePrev*(1-churnR);
+    const active=retained+newCust;
+    const annualRev=newCust*v.price+retained*v.price*opy;
+    const annualContrib=newCust*v.cm+retained*(v.gp-v.retention)*opy;
+    cumRev+=annualRev; cumContrib+=annualContrib;
+    rows.push({y,newCust:Math.round(newCust),retained:Math.round(retained),active:Math.round(active),annualRev,annualContrib,cumRev,cumContrib});
+    activePrev=active; newCust=newCust*(1+acqGr);
+  }
+  if(gChart){gChart.destroy();gChart=null;}
+  gChart=new Chart(document.getElementById('growthChart'),{
+    type:'bar',
+    data:{
+      labels:rows.map(r=>'Year '+r.y),
+      datasets:[
+        {type:'bar',label:'Annual revenue',data:rows.map(r=>r.annualRev),backgroundColor:DV_BLUE+'bb',borderRadius:2,yAxisID:'y'},
+        {type:'bar',label:'Annual contribution',data:rows.map(r=>r.annualContrib),backgroundColor:DV_TEAL+'cc',borderRadius:2,yAxisID:'y'},
+        {type:'line',label:'Cumulative revenue',data:rows.map(r=>r.cumRev),borderColor:DV_PURPLE,backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:DV_PURPLE,tension:.35,yAxisID:'y2',borderWidth:2},
+        {type:'line',label:'Cumulative contribution',data:rows.map(r=>r.cumContrib),borderColor:DV_GRAY,backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:DV_GRAY,tension:.35,yAxisID:'y2',borderWidth:2,borderDash:[4,3]}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:250},
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{font:{size:11,family:"'Gotham','Segoe UI',Arial,sans-serif"},color:'#aaa',boxWidth:10,padding:14}},
+        tooltip:{callbacks:{label:(ctx)=>` ${ctx.dataset.label}: ${fmtK(ctx.raw)}`}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#aaa',font:{size:11}},border:{display:false}},
+        y:{grid:{color:'#f0f0f0'},ticks:{color:'#aaa',font:{size:11},callback:v=>fmtK(v)},border:{display:false},title:{display:true,text:'Annual (£)',color:'#bbb',font:{size:10}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#aaa',font:{size:11},callback:v=>fmtK(v)},border:{display:false},title:{display:true,text:'Cumulative (£)',color:'#bbb',font:{size:10}}}
+      }
+    }
+  });
+  document.getElementById('growthTable').innerHTML=`
+    <thead><tr>
+      <th style="text-align:left">Year</th>
+      <th>New cust.</th><th>Retained</th><th>Active</th>
+      <th>Annual rev.</th><th>Annual contrib.</th>
+      <th>Cum. revenue</th><th>Cum. contribution</th>
+    </tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td>Year ${r.y}</td>
+      <td>${fmtN(r.newCust)}</td><td>${fmtN(r.retained)}</td><td>${fmtN(r.active)}</td>
+      <td>${fmtK(r.annualRev)}</td><td>${fmtK(r.annualContrib)}</td>
+      <td>${fmtK(r.cumRev)}</td><td>${fmtK(r.cumContrib)}</td>
+    </tr>`).join('')}</tbody>`;
+}
+function calc(){calcUE();if(document.getElementById('panel-mkt').classList.contains('active'))calcMkt();}
+document.getElementById('ltv').addEventListener('input',function(){document.getElementById('ltvVal').textContent=parseFloat(this.value).toFixed(1)+'×';calc();});
+document.getElementById('acqGrowth').addEventListener('input',function(){document.getElementById('acqGrowthVal').textContent=this.value+'%';calcMkt();});
+document.getElementById('churn').addEventListener('input',function(){document.getElementById('churnVal').textContent=this.value+'%';calcMkt();});
+document.getElementById('ordersPerYear').addEventListener('input',function(){document.getElementById('ordersPerYearVal').textContent=parseFloat(this.value).toFixed(1)+'×';calcMkt();});
+document.getElementById('years').addEventListener('input',function(){document.getElementById('yearsVal').textContent=this.value+' yrs';calcMkt();});
+document.querySelectorAll('#productTabs .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('#productTabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const p=parseFloat(t.dataset.price),c=parseFloat(t.dataset.cogs);
+    if(p>0){document.getElementById('price').value=p.toFixed(2);document.getElementById('cogs').value=c.toFixed(2);}
+    if(t.dataset.tam){
+      document.getElementById('tam').value=t.dataset.tam;
+      document.getElementById('sam').value=t.dataset.sam;
+      document.getElementById('somPct').value=t.dataset.sompct;
+      document.getElementById('tamHint').textContent=t.dataset.tamLabel;
+      document.getElementById('samHint').textContent=t.dataset.samLabel;
+    }
+    calc();
+  });
+});
+document.querySelectorAll('#channelTabs .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('#channelTabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const cac=parseFloat(t.dataset.cac),low=t.dataset.low,high=t.dataset.high;
+    if(parseFloat(high)>0){document.getElementById('cac').value=cac;document.getElementById('cacBenchmark').textContent=`UK DTC benchmark: £${low}–£${high}`;}
+    else document.getElementById('cacBenchmark').textContent='Enter your actual CAC';
+    calc();
+  });
+});
+document.querySelectorAll('input[type=number]').forEach(i=>i.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>
