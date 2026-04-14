@@ -908,12 +908,19 @@ function renderDrivers(ca, pa, combined, fixedYr, yrs) {
   const dFixed   = fixedYr * 0.1;
   const dCOGS    = (ca.cogs*0.1*last.caActive*caOpy) + (pa.cogs*0.1*last.paActive*paOpy);
 
+  // Acquisition growth rate: 10% higher rate → more new customers in final year
+  // caNewFY_better = caY1*(1+caAcqGrV*1.1)^(yrs-1); delta × contribution margin
+  const caNewFYBetter = caY1V * Math.pow(1 + caAcqGrV*1.1, yrs-1);
+  const paNewFYBetter = paY1V * Math.pow(1 + paAcqGrV*1.1, yrs-1);
+  const dAcqGrowth = (caNewFYBetter - caNewFY)*ca.cm + (paNewFYBetter - paNewFY)*pa.cm;
+
   const levers = [
-    { name:'5% price increase', detail:'Across both products — highest-leverage lever as it flows directly to margin with no incremental cost.', delta:dPrice },
-    { name:'10% churn reduction', detail:'Retaining more of the existing base compounds over time. Directly extends average customer lifetime and LTV.', delta:dChurn },
-    { name:'10% CAC reduction', detail:'Improves unit economics on every new customer acquired. Most impactful as the active customer base grows.', delta:dCAC },
-    { name:'10% fixed cost reduction', detail:'Meaningful at this scale. As revenue grows, fixed costs become a smaller share of contribution.', delta:dFixed },
-    { name:'10% COGS reduction', detail:'Improves gross margin on every order. Typically achieved through volume-based supplier negotiations.', delta:dCOGS },
+    { name:'10% higher acquisition growth rate', detail:'More new customers each year compounds through the retained base over time. At early stage this is often the dominant lever — the revenue base is too small for retention effects to dominate yet.', delta:dAcqGrowth },
+    { name:'5% price increase', detail:'Across both products — flows directly to margin with no incremental cost. Low price elasticity expected given evidence-led positioning and coach referral channel.', delta:dPrice },
+    { name:'10% churn reduction', detail:'Retaining more of the existing base compounds over time. Increasingly powerful as the active customer base grows larger relative to new acquisitions.', delta:dChurn },
+    { name:'10% CAC reduction', detail:'Improves unit economics on every new customer acquired. Most impactful as the active customer base grows and channel mix matures.', delta:dCAC },
+    { name:'10% fixed cost reduction', detail:'Meaningful at this scale. As revenue grows, fixed costs become a smaller share of contribution and operating leverage kicks in.', delta:dFixed },
+    { name:'10% COGS reduction', detail:'Improves gross margin on every order. Typically achieved through volume-based supplier negotiations as production scale increases.', delta:dCOGS },
   ].sort((a,b) => b.delta - a.delta);
 
   const revMultLo = parseFloat(document.getElementById('rev-mult-lo').value)||0.5;
@@ -961,12 +968,14 @@ function renderDrivers(ca, pa, combined, fixedYr, yrs) {
       lines.push(`The business crosses into profitability in Year ${breakevenYear.y}. The focus shifts from survival to margin expansion — driving EBITDA margin above 20% is what creates a fundable and acquirable business.`);
     }
 
-    if (topLever.name.includes('price')) {
-      lines.push(`The highest-leverage profitability action is a <strong>price increase</strong>. At current volumes, a 5% increase on both products adds ${fmtK(topLever.delta)} to annual EBITDA — more than any other single lever. Price increases are often resisted intuitively but the evidence-led positioning of the Accelerator Series, combined with a coach referral channel, creates exactly the conditions where price elasticity is low. A credible scientific basis reduces price sensitivity.`);
+    if (topLever.name.includes('acquisition growth')) {
+      lines.push(`The single highest-leverage action is <strong>accelerating new customer acquisition</strong>. At this stage of the business, the retained base is still small — which means the revenue pool is dominated by new customers. A 10% improvement in annual acquisition growth rate adds ${fmtK(topLever.delta)} to final-year EBITDA by compounding the new customer count each year. Every additional year of higher growth rate multiplies this effect. The primary acquisition levers available are: deepening the coach referral network, building organic search authority around high-intent endurance nutrition queries, and converting EDGE Study participants into advocates.`);
+    } else if (topLever.name.includes('price')) {
+      lines.push(`The highest-leverage profitability action at this scale is a <strong>price increase</strong>. A 5% increase on both products adds ${fmtK(topLever.delta)} to annual EBITDA — more than any other single lever including growing the customer base faster. Price increases are often resisted intuitively but the evidence-led positioning of the Accelerator Series, combined with a coach referral channel, creates exactly the conditions where price elasticity is low.`);
     } else if (topLever.name.includes('churn')) {
-      lines.push(`The highest-leverage profitability action is <strong>reducing churn</strong>. At current scale, a 10% improvement in retention adds ${fmtK(topLever.delta)} to annual EBITDA. Each percentage point of churn reduction also compounds in the LTV calculation, improving unit economics across every new customer acquired thereafter. Churn reduction levers include a stronger onboarding sequence, a protocol-based usage guide that builds habit, and proactive win-back at the 60-day mark.`);
+      lines.push(`At this scale, <strong>retention has overtaken acquisition growth</strong> as the primary EBITDA lever. A 10% improvement in churn adds ${fmtK(topLever.delta)} to annual EBITDA. This indicates the retained base is now large enough that keeping customers is worth more than finding new ones — a healthy sign of a maturing business. Churn reduction levers include a stronger onboarding sequence, a protocol-based usage guide that builds habit, and proactive win-back at the 60-day mark.`);
     } else if (topLever.name.includes('CAC')) {
-      lines.push(`The highest-leverage profitability action is <strong>reducing acquisition cost</strong>. A 10% CAC reduction adds ${fmtK(topLever.delta)} to annual EBITDA. As the coach referral channel develops and organic content builds domain authority, blended CAC should compress naturally. Each percentage point improvement compounds as the acquisition base grows year-on-year.`);
+      lines.push(`The highest-leverage profitability action is <strong>reducing acquisition cost</strong>. A 10% CAC reduction adds ${fmtK(topLever.delta)} to annual EBITDA. As the coach referral channel deepens and organic content builds domain authority, blended CAC should compress naturally. Each improvement compounds as the acquisition base grows year on year.`);
     }
 
     lines.push(`Fixed costs of ${fmtK(fixedYr)}/yr represent ${baseFYContrib>0?(fixedYr/baseFYContrib*100).toFixed(0)+'%':' the majority'} of Year ${yrs} contribution. ${fixedYr/baseFYRev*100<20?'At sub-20% of revenue, the fixed cost base is lean and the business has natural operating leverage as revenue scales.':'Keeping fixed cost growth below revenue growth is critical — every pound added to the fixed base raises the breakeven customer count.'}`);
