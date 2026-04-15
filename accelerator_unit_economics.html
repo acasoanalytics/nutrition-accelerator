@@ -449,12 +449,8 @@ function getUE(pid) {
   const price = v('price'), cogs = v('cogs'), ship = v('ship'), proc = v('proc') / 100;
   const cac = v('cac'), retention = v('ret');
   // Derive LTV multiplier from churn rate and repeat orders/yr
-  const churnEl = document.getElementById(`${pid}-churn`);
-  const churnRaw = churnEl ? parseFloat(churnEl.value) : NaN;
-  const churnRate = (isNaN(churnRaw) ? 50 : churnRaw) / 100;
-  const opyEl = document.getElementById(`${pid}-opy`);
-  const opyRaw = opyEl ? parseFloat(opyEl.value) : NaN;
-  const opy = isNaN(opyRaw) ? 1.5 : opyRaw;
+  const churnRate = (RANGE_STORE[`${pid}-churn`] ?? 50) / 100;
+  const opy       = RANGE_STORE[`${pid}-opy`] ?? 1.5;
   const avgYrsRetained = churnRate > 0 ? 1 / churnRate : 0;
   const ltvMult = 1 + (opy * avgYrsRetained);
   const procFee = price * proc;
@@ -581,8 +577,8 @@ function calcProduct(pid) {
   const y1    = n('y1');
   const acqGr = n('acqgr') / 100;
   const churn = n('churn') / 100;
-  const opy   = parseFloat(document.getElementById(`${pid}-opy`).value) || 1;
-  const yrs   = parseInt(document.getElementById(`${pid}-years`).value) || 5;
+  const opy   = RANGE_STORE[`${pid}-opy`] ?? 1.5;
+  const yrs   = Math.round(RANGE_STORE[`${pid}-years`] ?? 5);
   const rows  = growthRows(v, y1, acqGr, churn, opy, yrs);
 
   if (charts[pid].rev) { charts[pid].rev.destroy(); charts[pid].rev = null; }
@@ -709,12 +705,12 @@ function buildProductUI(pid) {
     <div class="surface">
       <div class="row-3" style="gap:12px;margin-bottom:12px">
         <div class="field"><label>Year 1 customers</label><input type="number" id="${pid}-y1" value="${cfg.y1}" step="10" min="1"><div class="hint">Start from SOM or your own target</div></div>
-        <div class="field"><label>New customer growth / yr (%) ${tipB('acqgr',false,pid)}</label><div class="slider-row"><input type="range" id="${pid}-acqgr" min="0" max="200" step="5" value="${cfg.acqGr}"><span class="slider-val" id="${pid}-acqgr-val">${cfg.acqGr}%</span></div></div>
-        <div class="field"><label>Annual churn (%) ${tipB('churn',true,pid)}</label><div class="slider-row"><input type="range" id="${pid}-churn" min="0" max="90" step="5" value="${cfg.churn}"><span class="slider-val" id="${pid}-churn-val">${cfg.churn}%</span></div><div class="hint">DTC supplement avg: 40–70%</div></div>
+        <div class="field"><label>New customer growth / yr (%) ${tipB('acqgr',false,pid)}</label><input type="number" id="${pid}-acqgr" value="${cfg.acqGr}" step="5" min="0" max="500" oninput="RANGE_STORE['${pid}-acqgr']=parseFloat(this.value)||0"><div class="hint">% per year</div></div>
+        <div class="field"><label>Annual churn (%) ${tipB('churn',true,pid)}</label><input type="number" id="${pid}-churn" value="${cfg.churn}" step="5" min="0" max="100" oninput="RANGE_STORE['${pid}-churn']=parseFloat(this.value)||0"><div class="hint">DTC supplement avg: 40–70%</div></div>
       </div>
       <div class="row-2" style="gap:12px">
-        <div class="field"><label>Repeat orders / retained customer / yr</label><div class="slider-row"><input type="range" id="${pid}-opy" min="0.5" max="4" step="0.5" value="1.5"><span class="slider-val" id="${pid}-opy-val">1.5×</span></div></div>
-        <div class="field"><label>Years to model</label><div class="slider-row"><input type="range" id="${pid}-years" min="3" max="7" step="1" value="5"><span class="slider-val" id="${pid}-years-val">5 yrs</span></div></div>
+        <div class="field"><label>Repeat orders / retained customer / yr</label><input type="number" id="${pid}-opy" value="1.5" step="0.5" min="0.5" max="12" oninput="RANGE_STORE['${pid}-opy']=parseFloat(this.value)||1.5"><div class="hint">Orders per retained customer per year</div></div>
+        <div class="field"><label>Years to model</label><input type="number" id="${pid}-years" value="5" step="1" min="1" max="10" oninput="RANGE_STORE['${pid}-years']=parseFloat(this.value)||5"><div class="hint">1–10 years</div></div>
       </div>
     </div>
   </div>
@@ -741,24 +737,28 @@ function buildProductUI(pid) {
     });
   });
 
-  // slider listeners
+  // number input listeners — all inputs including former sliders
+  [`${pid}-price`,`${pid}-cogs`,`${pid}-ship`,`${pid}-proc`,`${pid}-cac`,`${pid}-ret`,
+   `${pid}-tam`,`${pid}-sam`,`${pid}-sompct`,`${pid}-y1`].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => calcProduct(pid));
+  });
+
+  // Growth inputs also write to RANGE_STORE — used by serializeState so
+  // the URL is NEVER read from the DOM for these values
   [`${pid}-acqgr`,`${pid}-churn`,`${pid}-opy`,`${pid}-years`].forEach(id => {
     document.getElementById(id).addEventListener('input', function() {
-      const valEl = document.getElementById(id+'-val');
-      if (!valEl) return;
-      if (id.endsWith('-opy')) valEl.textContent = parseFloat(this.value).toFixed(1)+'×';
-      else if (id.endsWith('-years')) valEl.textContent = this.value+' yrs';
-      else valEl.textContent = this.value+'%';
+      RANGE_STORE[id] = parseFloat(this.value);
       calcProduct(pid);
     });
   });
 
-  // number input listeners
-  [`${pid}-price`,`${pid}-cogs`,`${pid}-ship`,`${pid}-proc`,`${pid}-cac`,`${pid}-ret`,`${pid}-tam`,`${pid}-sam`,`${pid}-sompct`,`${pid}-y1`].forEach(id => {
-    document.getElementById(id).addEventListener('input', () => calcProduct(pid));
-  });
-
   calcProduct(pid);
+
+  // Seed RANGE_STORE from the just-created elements while they are still visible
+  [`${pid}-acqgr`,`${pid}-churn`,`${pid}-opy`,`${pid}-years`].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) RANGE_STORE[id] = parseFloat(el.value) || RANGE_STORE[id];
+  });
 }
 
 // ── business overview ─────────────────────────────────────────────────────────
@@ -801,17 +801,16 @@ function calcBiz() {
   const caSom = buildFunnel('biz-ca-funnel', caTam, caSam, caSomPct, PRODUCTS.ca.tamLabel, PRODUCTS.ca.samLabel);
   const paSom = buildFunnel('biz-pa-funnel', paTam, paSam, paSomPct, PRODUCTS.pa.tamLabel, PRODUCTS.pa.samLabel);
 
-  // pull growth params entirely from product tabs — use rangeVal() to safely read range inputs
-  const rangeVal = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
-  const caOpy   = rangeVal('ca-opy', 1.5);
-  const paOpy   = rangeVal('pa-opy', 1.5);
-  const caYrs   = Math.round(rangeVal('ca-years', 5));
-  const paYrs   = Math.round(rangeVal('pa-years', 5));
+  // pull growth params from product tab inputs
+  const caOpy   = RANGE_STORE['ca-opy'] ?? 1.5;
+  const paOpy   = RANGE_STORE['pa-opy'] ?? 1.5;
+  const caYrs   = Math.round(RANGE_STORE['ca-years'] ?? 5);
+  const paYrs   = Math.round(RANGE_STORE['pa-years'] ?? 5);
   const yrs     = Math.max(caYrs, paYrs);
-  const caAcqGr = rangeVal('ca-acqgr', 50) / 100;
-  const caChurn = rangeVal('ca-churn', 50) / 100;
-  const paAcqGr = rangeVal('pa-acqgr', 60) / 100;
-  const paChurn = rangeVal('pa-churn', 55) / 100;
+  const caAcqGr = (RANGE_STORE['ca-acqgr'] ?? 50)/100;
+  const caChurn = (RANGE_STORE['ca-churn'] ?? 50)/100;
+  const paAcqGr = (RANGE_STORE['pa-acqgr'] ?? 60)/100;
+  const paChurn = (RANGE_STORE['pa-churn'] ?? 55)/100;
   const caY1    = n('ca-y1');
   const paY1    = n('pa-y1');
 
@@ -919,12 +918,12 @@ function renderDrivers(ca, pa, combined, fixedYr, yrs) {
   const paLTVCAC  = parseFloat(pa.ltvCacRatio) || 0;
 
   // sensitivity levers
-  const caAcqGrV = (parseFloat(document.getElementById('ca-acqgr').value)||50)/100;
-  const paAcqGrV = (parseFloat(document.getElementById('pa-acqgr').value)||60)/100;
+  const caAcqGrV = (RANGE_STORE['ca-acqgr'] ?? 50)/100;
+  const paAcqGrV = (RANGE_STORE['pa-acqgr'] ?? 60)/100;
   const caY1V    = parseFloat(document.getElementById('ca-y1').value)||200;
   const paY1V    = parseFloat(document.getElementById('pa-y1').value)||100;
-  const caOpy    = parseFloat(document.getElementById('ca-opy').value)||1.5;
-  const paOpy    = parseFloat(document.getElementById('pa-opy').value)||1.5;
+  const caOpy    = RANGE_STORE['ca-opy'] ?? 1.5;
+  const paOpy    = RANGE_STORE['pa-opy'] ?? 1.5;
   const caNewFY  = caY1V * Math.pow(1+caAcqGrV, yrs-1);
   const paNewFY  = paY1V * Math.pow(1+paAcqGrV, yrs-1);
 
@@ -1111,13 +1110,13 @@ const PARAM_MAP = {
   cap: 'ca-price', cac2: 'ca-cogs', cas: 'ca-ship', capr: 'ca-proc',
   cak: 'ca-cac', car: 'ca-ret',
   catam: 'ca-tam', casam: 'ca-sam', casom: 'ca-sompct',
-  cay1: 'ca-y1', caag: 'ca-acqgr', cach: 'ca-churn',
+  cay1: 'ca-y1', caag: 'ca-acqgr', cach2: 'ca-churn',
   caop: 'ca-opy', cayr: 'ca-years',
   // Protein Accelerator
   pap: 'pa-price', pac: 'pa-cogs', pas: 'pa-ship', papr: 'pa-proc',
   pak: 'pa-cac', par: 'pa-ret',
   patam: 'pa-tam', pasam: 'pa-sam', pasom: 'pa-sompct',
-  pay1: 'pa-y1', paag: 'pa-acqgr', pach: 'pa-churn',
+  pay1: 'pa-y1', paag: 'pa-acqgr', pach2: 'pa-churn',
   paop: 'pa-opy', payr: 'pa-years',
   // Business / fixed costs
   fcp: 'cost-people', fct: 'cost-tech', fco: 'cost-ops', fcx: 'cost-other',
@@ -1129,26 +1128,44 @@ const PARAM_MAP = {
 // Channel tab index for each product (0=Meta, 1=Google, 2=SEO, 3=Influencer, 4=Email, 5=Coach, 6=Custom)
 const CHANNEL_LABELS = ['Blended','Meta ads','Google ads','Organic / SEO','Influencer / affiliate','Email / CRM','Coach referral','Custom'];
 
+// RANGE_STORE: plain JS object holding range slider values.
+// Range inputs return their min value when inside display:none panels — this object
+// is the single source of truth for all range inputs and is never read from the DOM.
+const RANGE_STORE = {};
+const RANGE_IDS = ['ca-acqgr','ca-churn','ca-opy','ca-years','pa-acqgr','pa-churn','pa-opy','pa-years'];
+// Defaults matching PRODUCTS config and template defaults
+RANGE_STORE['ca-acqgr'] = 50; RANGE_STORE['ca-churn'] = 50;
+RANGE_STORE['ca-opy']   = 1.5; RANGE_STORE['ca-years'] = 5;
+RANGE_STORE['pa-acqgr'] = 60; RANGE_STORE['pa-churn'] = 55;
+RANGE_STORE['pa-opy']   = 1.5; RANGE_STORE['pa-years'] = 5;
+
 function serializeState() {
-  const p = new URLSearchParams();
+  const params = new URLSearchParams();
   const name = document.getElementById('scenario-name').value.trim();
-  if (name) p.set('name', name);
+  if (name) params.set('name', name);
+
   Object.entries(PARAM_MAP).forEach(([key, id]) => {
+    // Growth inputs: read from RANGE_STORE — always current, never touches the DOM
+    if (RANGE_IDS.includes(id)) {
+      const v = RANGE_STORE[id];
+      if (v !== undefined && !isNaN(v)) params.set(key, v);
+      return;
+    }
+    // All other inputs: read from DOM (these are always visible or safe to read)
     const el = document.getElementById(id);
     if (!el) return;
     const val = el.value;
-    // Skip empty or NaN values — don't corrupt the URL
     if (val === '' || val === null || val === undefined) return;
     const num = parseFloat(val);
     if (isNaN(num) && el.type !== 'text') return;
-    p.set(key, val);
+    params.set(key, val);
   });
-  // Channel tab active index per product
+
   ['ca','pa'].forEach(pid => {
     const tabs = document.querySelectorAll(`#${pid}-chTabs .tab`);
-    tabs.forEach((t,i) => { if (t.classList.contains('active')) p.set(`${pid}ch`, i); });
+    tabs.forEach((t,i) => { if (t.classList.contains('active')) params.set(`${pid}ch`, i); });
   });
-  return p;
+  return params;
 }
 
 function applyParams(p) {
@@ -1156,7 +1173,10 @@ function applyParams(p) {
   Object.entries(PARAM_MAP).forEach(([key, id]) => {
     if (p.has(key)) {
       const el = document.getElementById(id);
-      if (el) el.value = p.get(key);
+      if (el) {
+        el.value = p.get(key);
+        if (RANGE_IDS.includes(id)) RANGE_STORE[id] = parseFloat(p.get(key));
+      }
     }
   });
 
